@@ -21,18 +21,38 @@
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
-  color: white;
+  color: rgb(218, 218, 218);
 }
 
 .App-link {
   color: #61dafb;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.ChartPlotter {
+  float: left;
+  margin: 10px;
+  width: 60%;
+  border: 3px solid green;
+}
+
+.Options {
+  float: right;
+  margin: 10px;
+  margin-right: 10%;
+  width: 20%;
+  border: 3px solid green;
+}
+
+.Data1 {
+  float: left;
+  margin: 10px;
+  width: 40%;
+  border: 3px solid green;
+}
+
+.Data2 {
+  float: right;
+  margin: 10px;
+  width: 40%;
+  border: 3px solid green;
 }
