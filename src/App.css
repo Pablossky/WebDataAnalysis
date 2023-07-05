@@ -45,6 +45,7 @@
 
 .Data1 {
   float: left;
+  text-align: center;
   margin: 10px;
   width: 40%;
   border: 3px solid green;

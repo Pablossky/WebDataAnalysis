@@ -57,7 +57,7 @@ const layout = (title, xlabel, ylabel) => {
   }
 };
 
-const labels = ['name', 'xAxes', 'yAxes']
+const labels = ['Chart', 'xAxes', 'yAxes']
 
 function Chart({data}){
 

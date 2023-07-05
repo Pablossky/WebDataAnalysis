@@ -1,6 +1,6 @@
 import './App.css';
 import React, { useState } from 'react'
-import { Dropdown, Table, Button } from 'semantic-ui-react'
+import { Dropdown, Table} from 'semantic-ui-react'
 import Chart from "./plotly/mychart.js";
 import 'semantic-ui-css/semantic.min.css'
 
@@ -26,7 +26,6 @@ function App() {
       })
     };
   }
-
   
   // Metody Interpolacji
   const interpolationMethod = [
@@ -61,6 +60,9 @@ function App() {
     }
     else if (selectedMethod === 'excel') {
       return <Chart data={[dataExcel]} layout={labelsExcel}/>;
+    }
+    else {
+      return null;
     }
   }
 
@@ -119,7 +121,7 @@ function App() {
 }
 
 function copyData() {
-  const textData = renderData(selectedMethod);
+  const textData = renderData([selectedMethod]);
   const element = document.createElement("a");
   const file = new Blob([textData], { type: "text/plain" });
   element.href = URL.createObjectURL(file);
@@ -169,6 +171,11 @@ function copyData() {
       <div className="Data2">
         Data2
         <button onClick={copyData}>Copy data</button>
+
+        <button onClick={() =>  navigator.clipboard.writeText(dataExcel)}>
+        Kopiuj dane z Excela
+        </button>
+
       </div>
     </div>
   );
