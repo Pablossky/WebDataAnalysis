@@ -27,6 +27,7 @@ function App() {
     };
   }
 
+  
   // Metody Interpolacji
   const interpolationMethod = [
     { key: '1', text: 'Linear', value: 'linear'},
@@ -83,26 +84,73 @@ function App() {
     );
   };
 
-  function CopyData() {
-    var copyText = document.getElementById("Data1");
-    copyText.select();
-    navigator.clipboard.writeText(copyText.value);
+  const renderData = () => {
+    if (selectedMethod === 'excel') {
+      return(
+        <div>
+    {data.length > 0 && (
+    <table className="table">
+      <tbody>
+        {data.map((row, index) => (
+          <tr key={index}>
+            {Object.values(row).map((value, index) => (
+              <td key={index}>{value}</td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )} </div>)
   }
-  
+
+  else if (selectedMethod === 'linear') {
+    return (
+      <div>
+      <DataTable dataNumberX={dataLinear.x} dataNumberY={dataLinear.y}/>
+      </div>
+      )}
+      
+  else if (selectedMethod === 'curve') {
+    return (
+      <div>
+      <DataTable dataNumberX={dataCurve.x} dataNumberY={dataCurve.y}/>
+      </div>
+      )}
+}
+
+function copyData() {
+  const textData = renderData(selectedMethod);
+  const element = document.createElement("a");
+  const file = new Blob([textData], { type: "text/plain" });
+  element.href = URL.createObjectURL(file);
+  element.download = "data.txt";
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);
+}
+
+
   return (
     <div className="App">
 
       <div className="ChartPlotter">
-        {renderChart()}
+        {renderChart(selectedMethod)}
       </div>
       <div className="Options">
         
+      <div className="InputFile">
+        Wczytaj plik .xlsx
       <input 
       type="file" 
       accept=".xlsx, .xls" 
       onChange={handleFileUpload} 
       />
+      </div>
 
+      <div className="Space">
+      </div>
+        
+        Wybierz metodę:
       <Dropdown
         placeholder="Choose method"
         fluid
@@ -115,28 +163,12 @@ function App() {
 
       <div className="Data1">
         Data
-        {data.length > 0 && (
-        <table className="table">
-          <tbody>
-            {data.map((row, index) => (
-              <tr key={index}>
-                {Object.values(row).map((value, index) => (
-                  <td key={index}>{value}</td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-        <div id="OutputData1">
-          <DataTable dataNumberX={dataLinear.x} dataNumberY={dataLinear.y}/>
-        </div>
-        Data Curve
-          <DataTable dataNumberX={dataCurve.x} dataNumberY={dataCurve.y}/>
+        {renderData(selectedMethod)}
       </div>
+
       <div className="Data2">
         Data2
-        <button onClick="CopyData()">Copy text</button>
+        <button onClick={copyData}>Copy data</button>
       </div>
     </div>
   );

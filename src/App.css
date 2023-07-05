@@ -40,7 +40,7 @@
   margin: 10px;
   margin-right: 10%;
   width: 20%;
-  border: 3px solid green;
+  font-size: large;
 }
 
 .Data1 {
@@ -55,4 +55,13 @@
   margin: 10px;
   width: 40%;
   border: 3px solid green;
+}
+
+.Space {
+  margin-top: 100px;
+}
+
+.InputFile {
+  border: 3px solid blue;
+  margin: 50 px;
 }
