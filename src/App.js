@@ -1,8 +1,10 @@
 import './App.css';
 import React, { useState } from 'react';
-import { Dropdown, Table } from 'semantic-ui-react';
+import { Dropdown } from 'semantic-ui-react';
 import Chart from "./plotly/mychart.js";
 import 'semantic-ui-css/semantic.min.css';
+import 'toolcool-range-slider';
+
 
 function App() {
 
@@ -62,26 +64,6 @@ function App() {
     }
   }
 
-
-  // Wyświetlanie tabeli
-  const DataTable = ({ dataNumberX, dataNumberY }) => {
-    return (
-      <Table celled>
-        <Table.Body>
-          <Table.Row>
-            {dataNumberX.map((number, index) => (
-              <Table.Cell key={index}>{number}</Table.Cell>
-            ))}
-          </Table.Row>
-          <Table.Row>
-            {dataNumberY.map((number, index) => (
-              <Table.Cell key={index}>{number}</Table.Cell>
-            ))}
-          </Table.Row>
-        </Table.Body>
-      </Table>
-    );
-  };
 
   const renderData = () => {
     if (selectedMethod === 'excel') {
@@ -240,7 +222,15 @@ const handlePaste = (event) => {
         value={selectedMethod}
         onChange={handleDropdownChange}
         />
+
+<     div className="Space">
       </div>
+      <div className="Space">
+      </div>
+
+        <toolcool-range-slider min="-100" max="100" value="50">Number of samples</toolcool-range-slider>
+      </div>
+
 
       <div className="Data1">
         Data: (X, Y)
@@ -256,7 +246,9 @@ const handlePaste = (event) => {
         Copy data to clipboard
         </button>
 
+        Wklej dane:
         <textarea onPaste={handlePaste}></textarea>
+        
       </div>
     </div>
   );
