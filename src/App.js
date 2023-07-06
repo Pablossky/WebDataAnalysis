@@ -151,7 +151,7 @@ function copyData() {
         
       <div className="InputFile">
         Wczytaj plik .xlsx
-      <input 
+      <input className="InputButton"
       type="file" 
       accept=".xlsx, .xls" 
       onChange={handleFileUpload} 
@@ -173,16 +173,17 @@ function copyData() {
       </div>
 
       <div className="Data1">
-        Data
+        Data: (X, Y)
+        <div className="DataList">
         {renderData(selectedMethod)}
+        </div>
       </div>
 
       <div className="Data2">
-        Data2
-        <button onClick={copyData}>Copy data</button>
+        <button className="FunctionalButton" onClick={copyData}>Download data in .txt</button>
 
-        <button onClick={() =>  navigator.clipboard.writeText(dataExcel)}>
-        Kopiuj dane z Excela
+        <button className="FunctionalButton" onClick={() =>  navigator.clipboard.writeText(clearingDataText(data))}>
+        Copy data to clipboard
         </button>
 
       </div>
