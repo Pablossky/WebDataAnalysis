@@ -211,27 +211,39 @@ function App() {
       <div className="Space">
       </div>
 
-        <toolcool-range-slider min="-100" max="100" value="50">Number of samples</toolcool-range-slider>
+        <toolcool-range-slider marginLeft='200px' min="-100" max="100" value="50">Number of samples</toolcool-range-slider>
       </div>
 
 
       <div className="Data1">
-        Data: (X, Y)
+        Wklej dane:
+        <textarea className='InputData' defaultValue='Input data...' onPaste={handlePaste}></textarea>
+        ---Data: (X, Y)---
+
         <div className="DataList">
-        {renderData(selectedMethod)}
+        
+        <div
+          style={{
+          width: '200px',
+          height: '300px', 
+          overflow: 'auto',
+          border: '1px solid #ccc',
+          borderRadius: '4px',
+          padding: '10px',
+          marginLeft: '-50px'
+        }}
+        >
+      <div>{renderData(selectedMethod)}</div>
+    </div>
         </div>
       </div>
 
-      <div className="Data2">
+      <div className="Data2"> 
         <button className="FunctionalButton" onClick={dataManagement.copyDataToTxt}>Download data in .txt</button>
 
         <button className="FunctionalButton" onClick={() =>  navigator.clipboard.writeText(dataManagement.clearingDataText(data))}>
         Copy data to clipboard
         </button>
-
-        Wklej dane:
-        <button onClick={handlePaste}></button>
-        
       </div>
     </div>
   );

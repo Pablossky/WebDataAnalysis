@@ -70,9 +70,15 @@
   margin-left: 60px;  
 }
 
+.InputData {
+  overflow: visible;
+  margin-right: 60px;
+  margin-top: 10px;
+  font-size: 10pt !important;  
+}
+
 .DataList {
-  margin-left: 50%;
-  font-size: 16pt !important;
+  margin-left: 70%;
 }
 
 .FunctionalButton {
