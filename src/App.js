@@ -2,13 +2,13 @@ import './App.css';
 import React, { useState } from 'react';
 import { Dropdown } from 'semantic-ui-react';
 import Chart from "./plotly/mychart.js";
+import "./functionality/dataManagement.js";
 import 'semantic-ui-css/semantic.min.css';
 import 'toolcool-range-slider';
 
+const dataManagement = require("./functionality/dataManagement.js");
 
 function App() {
-
-  
 
   const XLSX = require('xlsx');
 
@@ -18,12 +18,12 @@ function App() {
     const reader = new FileReader();
     reader.readAsBinaryString(e.target.files[0]);
     reader.onload = (e) => {
-      const data = e.target.result;
-      const workbook = XLSX.read(data, { type: "binary" });
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const parsedData = XLSX.utils.sheet_to_json(sheet);
-      setData(parsedData);
+    const data = e.target.result;
+    const workbook = XLSX.read(data, { type: "binary" });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const parsedData = XLSX.utils.sheet_to_json(sheet);
+    setData(parsedData);
     };
   }
 
@@ -65,7 +65,6 @@ function App() {
       return null;
     }
   }
-
 
   const renderData = () => {
     if (selectedMethod === 'excel') {
@@ -143,28 +142,10 @@ function App() {
     }
   };
 
-  function clearingDataText(dataToClear) {
-    const text = JSON.stringify(dataToClear);
-    let readyText = text.replaceAll(/["{XY:]/g, "")
-      .replaceAll(/[,[]/g, " ")
-      .replaceAll("}", "\n")
-      .replaceAll("]", "");
-
-    return readyText;
-  }
-
-  function copyData() {
-    const element = document.createElement("a");
-    const file = new Blob([clearingDataText(data)], { type: "text/plain" });
-    element.href = URL.createObjectURL(file);
-    element.download = "data.txt";
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-  }
-
-const handlePaste = (event) => {
+  const handlePaste = (event) => {
   const clipboardData = event.clipboardData || window.clipboardData;
+  console.log(event.clipboardData);
+  console.log(window.clipboardData);
   const pastedData = clipboardData.getData('text');
 
   const rows = pastedData.split('\n').filter((row) => row.trim() !== '');
@@ -242,14 +223,14 @@ const handlePaste = (event) => {
       </div>
 
       <div className="Data2">
-        <button className="FunctionalButton" onClick={copyData}>Download data in .txt</button>
+        <button className="FunctionalButton" onClick={dataManagement.copyDataToTxt}>Download data in .txt</button>
 
-        <button className="FunctionalButton" onClick={() =>  navigator.clipboard.writeText(clearingDataText(data))}>
+        <button className="FunctionalButton" onClick={() =>  navigator.clipboard.writeText(dataManagement.clearingDataText(data))}>
         Copy data to clipboard
         </button>
 
         Wklej dane:
-        <textarea onPaste={handlePaste}></textarea>
+        <button onClick={handlePaste}></button>
         
       </div>
     </div>
