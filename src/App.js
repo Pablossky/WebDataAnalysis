@@ -52,8 +52,8 @@ function App() {
   const handleSliderChange = (event) => {
     const value = event.target.value;
     setSliderValue(value);
-    const generatedArray = generateSampleArray(value);
-    setData(generatedArray);
+    const newArray = generateSampleArray(0, 100, value); // Adjust the range as needed
+    setGeneratedArray(newArray);
   };
 
   const renderChart = () => {
@@ -185,12 +185,14 @@ function App() {
     event.preventDefault(); // Prevent default paste behavior
   };
 
-  const generateSampleArray = (value) => {
-    const array = [];
-    for (let i = 0; i < value; i++) {
-      array.push(i);
+  const generateSampleArray = (start, end, numValues) => {
+    const step = (end - start) / (numValues - 1);
+    const newArray = [];
+    for (let i = 0; i < numValues; i++) {
+      const value = start + step * i;
+      newArray.push(value);
     }
-    return array;
+    return newArray;
   };
 
   const renderGeneratedArray = () => {
@@ -248,7 +250,7 @@ function App() {
           onPaste={handlePaste}
         ></textarea>
         <div className="Title1">
-        Data: (X, Y)
+          Data: (X, Y)
         </div>
         <div className="DataList">
           <div className="Container">
