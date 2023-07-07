@@ -9,7 +9,6 @@ import 'toolcool-range-slider';
 const dataManagement = require("./functionality/dataManagement.js");
 
 function App() {
-
   const XLSX = require('xlsx');
 
   const [data, setData] = useState([]);
@@ -20,23 +19,21 @@ function App() {
     const reader = new FileReader();
     reader.readAsBinaryString(e.target.files[0]);
     reader.onload = (e) => {
-    const data = e.target.result;
-    const workbook = XLSX.read(data, { type: "binary" });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const parsedData = XLSX.utils.sheet_to_json(sheet);
-    setData(parsedData);
+      const data = e.target.result;
+      const workbook = XLSX.read(data, { type: "binary" });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const parsedData = XLSX.utils.sheet_to_json(sheet);
+      setData(parsedData);
     };
   }
 
-  // Metody Interpolacji
   const interpolationMethod = [
     { key: '1', text: 'Linear', value: 'linear' },
     { key: '2', text: 'Curve', value: 'curve' },
     { key: '3', text: 'Excel', value: 'excel' },
   ];
 
-  // Dane
   const dataLinear = { name: 'Linear', x: [1, 2, 3, 4], y: [3, 3, 3, 3] }
   const labelsLinear = [dataLinear.name, 'xAxes', 'yAxes']
 
@@ -59,7 +56,6 @@ function App() {
     setData(generatedArray);
   };
 
-  // Wyświetlanie odpowiedniego wykresu
   const renderChart = () => {
     if (selectedMethod === 'linear') {
       return <Chart data={[dataLinear]} layout={labelsLinear} />;
@@ -74,19 +70,6 @@ function App() {
       return null;
     }
   }
-
-
-useEffect(() => {
-  const generateArray = () => {
-    const array = [];
-    for (let i = 0; i < sliderValue; i++) {
-      array.push(i);
-    }
-    return array;
-  };
-
-  setGeneratedArray(generateArray());
-}, [sliderValue]);
 
   useEffect(() => {
     renderChart();
@@ -169,152 +152,157 @@ useEffect(() => {
   };
 
   const handlePaste = (event) => {
-  const clipboardData = event.clipboardData || window.clipboardData;
-  console.log(event.clipboardData);
-  console.log(window.clipboardData);
-  const pastedData = clipboardData.getData('text');
+    const clipboardData = event.clipboardData || window.clipboardData;
+    console.log(event.clipboardData);
+    console.log(window.clipboardData);
+    const pastedData = clipboardData.getData('text');
 
-  const rows = pastedData.split('\n').filter((row) => row.trim() !== '');
+    const rows = pastedData.split('\n').filter((row) => row.trim() !== '');
 
-  const dataArray1 = [];
-  const dataArray2 = [];
+    const dataArray1 = [];
+    const dataArray2 = [];
 
-  rows.forEach((row) => {
-    const columns = row.split('\t'); // Adjust delimiter if needed
+    rows.forEach((row) => {
+      const columns = row.split('\t'); // Adjust delimiter if needed
 
-    if (columns.length >= 2) {
-      dataArray1.push(columns[0]);
-      dataArray2.push(columns[1]);
+      if (columns.length >= 2) {
+        dataArray1.push(columns[0]);
+        dataArray2.push(columns[1]);
+      }
+    });
+
+    const combinedArrays = [];
+
+    // Combine dataArray1 and dataArray2 into a single array
+    for (let i = 0; i < Math.max(dataArray1.length, dataArray2.length); i++) {
+      const element1 = dataArray1[i] || '';
+      const element2 = dataArray2[i] || '';
+
+      combinedArrays.push([element1, element2]);
     }
-  });
 
-  const combinedArrays = [];
+    setData(combinedArrays);
+    event.preventDefault(); // Prevent default paste behavior
+  };
 
-  // Combine dataArray1 and dataArray2 into a single array
-  for (let i = 0; i < Math.max(dataArray1.length, dataArray2.length); i++) {
-    const element1 = dataArray1[i] || '';
-    const element2 = dataArray2[i] || '';
+  const generateSampleArray = (value) => {
+    const array = [];
+    for (let i = 0; i < value; i++) {
+      array.push(i);
+    }
+    return array;
+  };
 
-    combinedArrays.push([element1, element2]);
-  }
-
-  setData(combinedArrays);
-  event.preventDefault(); // Prevent default paste behavior
-};
-
-const generateSampleArray = (value) => {
-  const array = [];
-  for (let i = 0; i < value; i++) {
-    array.push(i);
-  }
-  return array;
-};
-
-const renderGeneratedArray = () => {
-  return (
-    <div>
-      {generatedArray.map((item, index) => (
-        <div key={index}>{item}</div>
-      ))}
-    </div>
-  );
-};
+  const renderGeneratedArray = () => {
+    return (
+      <div>
+        {generatedArray.map((item, index) => (
+          <div key={index}>{item}</div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="App">
-
       <div className="ChartPlotter">
         <div>
-      <Chart selectedMethod={selectedMethod} />
-    </div>
-      </div>
-      <div className="Options">
-        
-      <div className="InputFile">
-        Wczytaj plik .xlsx
-      <input className="InputButton"
-      type="file" 
-      accept=".xlsx, .xls" 
-      onChange={handleFileUpload} 
-      />
-      </div>
-
-      <div className="Space">
-      </div>
-        
-        Wybierz metodę:
-      <Dropdown
-        placeholder="Choose method"
-        fluid
-        selection
-        options={interpolationMethod}
-        value={selectedMethod}
-        onChange={handleDropdownChange}
-        />
-
-<     div className="Space">
-      </div>
-      <div className="Space">
-      </div>
-
-      <toolcool-range-slider
-        min="-100"
-        max="100"
-        value={sliderValue}
-        onChange={handleSliderChange}>Number of samples</toolcool-range-slider>
-      </div>
-
-
-      <div className="Data1">
-        Wklej dane:
-        <textarea className='InputData' defaultValue='Input data...' onPaste={handlePaste}></textarea>
-        ---Data: (X, Y)---
-
-        <div className="DataList">
-        
-        <div
-          style={{
-          width: '200px',
-          height: '250px', 
-          overflow: 'auto',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          padding: '10px',
-          marginLeft: '-50px'
-        }}
-        >
-      <div>{renderGeneratedArray()}</div>
-    </div>
-
-    <div
-          style={{
-          width: '200px',
-          height: '250px', 
-          overflow: 'auto',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          padding: '10px',
-          marginLeft: '-50px'
-        }}
-        >
-      <div>{renderData(selectedMethod)}</div>
-    </div>
-
-
+          <Chart selectedMethod={selectedMethod} />
         </div>
       </div>
-
-      <div className="Data2"> 
-        <button className="FunctionalButton" onClick={dataManagement.copyDataToTxt}>Download data in .txt</button>
-
-        <button className="FunctionalButton" onClick={() =>  navigator.clipboard.writeText(dataManagement.clearingDataText(data))}>
-        Copy data to clipboard
+      <div className="Options">
+        <div className="InputFile">
+          Wczytaj plik .xlsx
+          <input
+            className="InputButton"
+            type="file"
+            accept=".xlsx, .xls"
+            onChange={handleFileUpload}
+          />
+        </div>
+        <div className="Space"></div>
+        Wybierz metodę:
+        <Dropdown
+          placeholder="Choose method"
+          selection
+          options={interpolationMethod}
+          value={selectedMethod}
+          onChange={handleDropdownChange}
+        />
+        <div className="Space"></div>
+        <div className="Space"></div>
+        <toolcool-range-slider
+          min="-100"
+          max="100"
+          value={sliderValue}
+          onChange={handleSliderChange}
+        >
+          Number of samples
+        </toolcool-range-slider>
+      </div>
+      <div className="Data1">
+        Wklej dane:
+        <textarea
+          className='InputData'
+          defaultValue='Input data...'
+          onPaste={handlePaste}
+        ></textarea>
+        <div className="Title1">
+        Data: (X, Y)
+        </div>
+        <div className="DataList">
+          <div className="Container">
+            <div
+              className="Box"
+              style={{
+                width: '200px',
+                height: '250px',
+                overflow: 'auto',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                padding: '10px',
+                marginLeft: '10px', // Adjust the margin as needed
+              }}
+            >
+              <div>{renderGeneratedArray()}</div>
+            </div>
+            <div
+              className="Box"
+              style={{
+                width: '200px',
+                height: '250px',
+                overflow: 'auto',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                padding: '10px',
+                marginLeft: '10px', // Adjust the margin as needed
+              }}
+            >
+              <div>{renderData(selectedMethod)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="Data2">
+        <button
+          className="FunctionalButton"
+          onClick={dataManagement.copyDataToTxt}
+        >
+          Download data in .txt
+        </button>
+        <button
+          className="FunctionalButton"
+          onClick={() =>
+            navigator.clipboard.writeText(dataManagement.clearingDataText(data))
+          }
+        >
+          Copy data to clipboard
         </button>
       </div>
     </div>
   );
 }
 
-export const dataExcel = { name: 'Excel', x: [], y: [] }
+export const dataExcel = { name: 'Excel', x: [], y: [] };
 
 export default App;

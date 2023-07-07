@@ -47,14 +47,15 @@
   float: left;
   text-align: center;
   margin: 10px;
-  width: 40%;
+  width: 60%;
   font-size: x-large;
 }
 
 .Data2 {
   float: right;
   margin: 10px;
-  width: 40%;
+  margin-right: 100px;
+  width: 30%;
 }
 
 .Space {
@@ -84,4 +85,32 @@
 .FunctionalButton {
   padding: 10px;
   margin: 10px;
+}
+
+.NewArrayTable {
+  margin-left: 300px;
+}
+
+.Container {
+  display: flex;
+  margin-left: -40px;
+}
+
+.Box {
+  width: 400px;
+  height: 250px;
+  overflow: auto;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10px;
+  margin-left: 10px; /* Adjust the margin as needed */
+}
+
+.Title1 {
+  float: right;
+  width: 360px;
+}
+
+.toolcool-range-slider:host {
+  width: 380px;
 }
