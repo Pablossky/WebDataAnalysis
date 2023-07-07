@@ -1,4 +1,4 @@
-import React, { useMemo, useState} from "react";
+import React, { useMemo, useState, useEffect } from 'react';
 import { ChartPlotly, dflt } from './chart-plotly';
 
 const config = {
@@ -57,49 +57,43 @@ const layout = (title, xlabel, ylabel) => {
   }
 };
 
-const labels = ['', 'xAxes', 'yAxes']
+const labels = ['', 'xAxes', 'yAxes'];
 
-function Chart({ data }) {
+function Chart({ selectedMethod }) {
   const [plotData, setPlotData] = useState([]);
   const [plotLayout, setPlotLayout] = useState(layout(...labels));
 
-  useMemo(() => {
-    const pData = data.map(i => ({
-      x: i.x,
-      y: i.y,
-      name: i.name,
-      line: { width: 1 },
-      marker: { size: 5, opacity: 0.8 },
-      hovertemplate: '%{y:.2f}'
-    }));
-    setPlotData(pData);
-  }, [data]);
+  // Update plotData and plotLayout whenever selectedMethod changes
+  useEffect(() => {
+    let newData;
+    let newLayout;
 
-    const updateChart = () => {
-      // Generate new data and layout
-      const newData = [
-        {
-          x: [1, 2, 3, 4, 5],
-          y: [5, 4, 3, 2, 1],
-          name: 'Updated Data',
-          line: { width: 1 },
-          marker: { size: 5, opacity: 0.8 },
-          hovertemplate: '%{y:.2f}'
-        }
+    if (selectedMethod === 'linear') {
+      newData = [
+        { name: 'Linear Data', x: [1, 2, 3, 4], y: [4, 3, 2, 1] },
       ];
-  
-      const newLayout = layout('Updated Chart', 'Updated X-axis', 'Updated Y-axis');
-  
-      // Update the state with the new data and layout
-      setPlotData(newData);
-    };
-  
-    return (
-      <div>
-        <button onClick={updateChart}>Update Chart</button>
-        <ChartPlotly data={plotData} layout={plotLayout} config={config} />
-      </div>
-    );
-  }
-  
-  export default Chart;
+      newLayout = layout('Linear Chart', 'Linear X-axis', 'Linear Y-axis');
+    } else if (selectedMethod === 'curve') {
+      newData = [
+        { name: 'Curve Data', x: [1, 2, 3, 4], y: [1, 2, 3, 4] },
+      ];
+      newLayout = layout('Curve Chart', 'Curve X-axis', 'Curve Y-axis');
+    } else if (selectedMethod === 'excel') {
+      newData = [
+        { name: 'Excel Data', x: [], y: [] },
+      ];
+      newLayout = layout('Excel Chart', 'Excel X-axis', 'Excel Y-axis');
+    }
+
+    setPlotData(newData);
+    setPlotLayout(newLayout);
+  }, [selectedMethod]);
+
+  return (
+    <div>
+      <ChartPlotly data={plotData} layout={plotLayout} config={dflt.config} />
+    </div>
+  );
+}
+
+export default Chart;

@@ -1,5 +1,5 @@
 import './App.css';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dropdown } from 'semantic-ui-react';
 import Chart from "./plotly/mychart.js";
 import "./functionality/dataManagement.js";
@@ -13,6 +13,8 @@ function App() {
   const XLSX = require('xlsx');
 
   const [data, setData] = useState([]);
+  const [sliderValue, setSliderValue] = useState(50);
+  const [generatedArray, setGeneratedArray] = useState([]);
 
   const handleFileUpload = (e) => {
     const reader = new FileReader();
@@ -50,6 +52,13 @@ function App() {
     setSelectedMethod(value);
   };
 
+  const handleSliderChange = (event) => {
+    const value = event.target.value;
+    setSliderValue(value);
+    const generatedArray = generateSampleArray(value);
+    setData(generatedArray);
+  };
+
   // Wyświetlanie odpowiedniego wykresu
   const renderChart = () => {
     if (selectedMethod === 'linear') {
@@ -65,6 +74,23 @@ function App() {
       return null;
     }
   }
+
+
+useEffect(() => {
+  const generateArray = () => {
+    const array = [];
+    for (let i = 0; i < sliderValue; i++) {
+      array.push(i);
+    }
+    return array;
+  };
+
+  setGeneratedArray(generateArray());
+}, [sliderValue]);
+
+  useEffect(() => {
+    renderChart();
+  }, [selectedMethod]);
 
   const renderData = () => {
     if (selectedMethod === 'excel') {
@@ -176,11 +202,31 @@ function App() {
   event.preventDefault(); // Prevent default paste behavior
 };
 
+const generateSampleArray = (value) => {
+  const array = [];
+  for (let i = 0; i < value; i++) {
+    array.push(i);
+  }
+  return array;
+};
+
+const renderGeneratedArray = () => {
+  return (
+    <div>
+      {generatedArray.map((item, index) => (
+        <div key={index}>{item}</div>
+      ))}
+    </div>
+  );
+};
+
   return (
     <div className="App">
 
       <div className="ChartPlotter">
-        {renderChart(selectedMethod)}
+        <div>
+      <Chart selectedMethod={selectedMethod} />
+    </div>
       </div>
       <div className="Options">
         
@@ -211,7 +257,11 @@ function App() {
       <div className="Space">
       </div>
 
-        <toolcool-range-slider marginLeft='200px' min="-100" max="100" value="50">Number of samples</toolcool-range-slider>
+      <toolcool-range-slider
+        min="-100"
+        max="100"
+        value={sliderValue}
+        onChange={handleSliderChange}>Number of samples</toolcool-range-slider>
       </div>
 
 
@@ -225,7 +275,21 @@ function App() {
         <div
           style={{
           width: '200px',
-          height: '300px', 
+          height: '250px', 
+          overflow: 'auto',
+          border: '1px solid #ccc',
+          borderRadius: '4px',
+          padding: '10px',
+          marginLeft: '-50px'
+        }}
+        >
+      <div>{renderGeneratedArray()}</div>
+    </div>
+
+    <div
+          style={{
+          width: '200px',
+          height: '250px', 
           overflow: 'auto',
           border: '1px solid #ccc',
           borderRadius: '4px',
@@ -235,6 +299,8 @@ function App() {
         >
       <div>{renderData(selectedMethod)}</div>
     </div>
+
+
         </div>
       </div>
 
@@ -248,5 +314,7 @@ function App() {
     </div>
   );
 }
+
+export const dataExcel = { name: 'Excel', x: [], y: [] }
 
 export default App;
