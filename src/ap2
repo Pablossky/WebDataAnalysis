@@ -5,74 +5,50 @@ import Chart from "./plotly/mychart.js";
 import "./functionality/dataManagement.js";
 import 'semantic-ui-css/semantic.min.css';
 import 'toolcool-range-slider';
-import Slider from '@mui/material/Slider';
 
 const dataManagement = require("./functionality/dataManagement");
 
+function ResampledTable({ array1, array2, sampleCount }) {
+  const resamplingFactor = array1.length / sampleCount;
+  const resampledArray1 = [];
+  const resampledArray2 = [];
+
+  for (let i = 0; i < sampleCount; i++) {
+    const index = Math.round(i * resamplingFactor);
+    resampledArray1.push(array1[index]);
+    resampledArray2.push(array2[index]);
+  }
+
+  return (
+    <table className="table">
+      <thead>
+        <tr>
+          <th>Array 1</th>
+          <th>Array 2</th>
+        </tr>
+      </thead>
+      <tbody>
+        {resampledArray1.map((value, index) => (
+          <tr key={index}>
+            <td>{value}</td>
+            <td>{resampledArray2[index]}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 function App() {
   const XLSX = require('xlsx');
-  const [sliderValue, setSliderValue] = useState(1000);
-  const [sampleCount, setSampleCount] = useState(5); 
+  const [sliderValue, setSliderValue] = useState(50);
 
-  const [chartData, setChartData] = useState(
-    { name: 'linear', x: [1, 2, 3, 4], y: [3, 3, 3, 3] }
-  )
-
-  const [resampledChartData, setResampledChartData] = useState(
-    { name: 'linear', x: [1, 2, 3, 4], y: [3, 3, 3, 3] }
-  );
-
-
-  function ResampledTable({ array1, array2, sampleCount }) {
-    const resamplingFactor = array1.length / sampleCount;
-    const resampledArray1 = [];
-    const resampledArray2 = [];
-
-    for (let i = 0; i < sampleCount; i++) {
-      const index = Math.round(i * resamplingFactor);
-      resampledArray1.push(array1[index]);
-      resampledArray2.push(array2[index]);
-    }
-
-    return (
-      <table className="table">
-        <thead>
-          <tr>
-            <th>X</th>
-            <th>Y</th>
-          </tr>
-        </thead>
-        <tbody>
-          {resampledArray1.map((value, index) => (
-            <tr key={index}>
-              <td>{value}</td>
-              <td>{resampledArray2[index]}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    );
-  }
+  const [chartData, setChartData] = useState({ name: 'linear', x: [1, 2, 3, 4], y: [3, 3, 3, 3] });
 
   const handleFileUpload = (e) => {
-    const reader = new FileReader();
-    reader.readAsBinaryString(e.target.files[0]);
-    reader.onload = (e) => {
-      const data = e.target.result;
-      const workbook = XLSX.read(data, { type: "binary" });
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const parsedData = XLSX.utils.sheet_to_json(sheet);
-      console.log(parsedData);
+    // ...
+  };
 
-      const x = [];
-      const y = [];
-      parsedData.forEach((o) => { x.push(o.X); y.push(o.Y) })
-      console.log(x);
-
-      setChartData({ name: 'excel', x, y })
-    };
-  }
   const interpolationMethod = [
     { key: '1', text: 'Linear', value: 'linear' },
     { key: '2', text: 'Curve', value: 'curve' },
@@ -100,35 +76,36 @@ function App() {
     }
   };
 
-  const handleSliderChange = (event, value) => {
+  const handleSliderChange = (event) => {
+    const value = parseInt(event.target.value);
     setSliderValue(value);
 
-    const numValues = Math.round(value);
-    setSampleCount(numValues);
+    const startIndex = 0;
+    const endIndex = chartData.x.length - 1;
 
-    const resampledY = resampleArray(chartData.y, numValues);
+    const numValues = Math.round((endIndex - startIndex + 1) * (value / 100));
+    const newArray = generateSampleArray(startIndex, endIndex, numValues);
 
     const newChartData = {
       ...chartData,
-      y: resampledY,
+      x: newArray,
+      y: newArray,
     };
 
-    setResampledChartData(newChartData);
+    setChartData(newChartData);
   };
-  
-  const resampleArray = (array, numValues) => {
-    const resamplingFactor = (array.length - 1) / (numValues - 1);
-    const resampledArray = [];
-  
+
+  const generateSampleArray = (start, end, numValues) => {
+    const step = (end - start) / (numValues - 1);
+    const newArray = [];
+
     for (let i = 0; i < numValues; i++) {
-      const index = Math.round(i * resamplingFactor);
-      resampledArray.push(array[index]);
+      const value = start + step * i;
+      newArray.push(value);
     }
-  
-    return resampledArray;
+
+    return newArray;
   };
-
-
 
   const renderData = () => {
     if (selectedMethod === 'excel') {
@@ -194,7 +171,6 @@ function App() {
       );
     }
   };
-  
 
   const handlePaste = (event) => {
     const clipboardData = event.clipboardData || window.clipboardData;
@@ -220,22 +196,23 @@ function App() {
   };
 
   const renderGeneratedArray = () => {
-    const array1 = chartData.x;
-    const array2 = chartData.y;
+    const array1 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const array2 = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+    const sampleCount = 5;
 
     return (
       <div>
+        <h1>Resampled Table</h1>
         <ResampledTable array1={array1} array2={array2} sampleCount={sampleCount} />
       </div>
     );
   };
 
-  
   return (
     <div className="App">
       <div className="ChartPlotter">
         <div>
-          <Chart data={[chartData, resampledChartData]} />
+          <Chart data={[chartData]} />
         </div>
       </div>
       <div className="Options">
@@ -259,13 +236,14 @@ function App() {
         />
         <div className="Space"></div>
         <div className="Space"></div>
-        <Slider
+        <toolcool-range-slider
+          min="-100"
+          max="100"
           value={sliderValue}
-          min={0}
-          max={2000}
           onChange={handleSliderChange}
-          aria-labelledby="continuous-slider"
-        />
+        >
+          Number of samples
+        </toolcool-range-slider>
       </div>
       <div className="Data1">
         Wklej dane:
@@ -291,7 +269,6 @@ function App() {
                 marginLeft: '10px', // Adjust the margin as needed
               }}
             >
-              <h1>Resampled</h1>
               {renderGeneratedArray()}
             </div>
             <div
@@ -306,7 +283,6 @@ function App() {
                 marginLeft: '10px', // Adjust the margin as needed
               }}
             >
-              <h1>Original</h1>
               <div>{renderData(selectedMethod)}</div>
             </div>
           </div>
@@ -317,13 +293,7 @@ function App() {
           className="FunctionalButton"
           onClick={() => dataManagement.copyDataToTxt(chartData)}
         >
-          Download resampled data in .txt
-        </button>
-        <button
-          className="FunctionalButton"
-          onClick={() => dataManagement.copyDataToTxt(dataLinear)}
-        >
-          Download original data in .txt
+          Download data in .txt
         </button>
         <button
           className="FunctionalButton"
