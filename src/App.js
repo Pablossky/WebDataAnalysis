@@ -12,8 +12,10 @@ const dataManagement = require("./functionality/dataManagement");
 function App() {
   const XLSX = require('xlsx');
   const [sliderValue, setSliderValue] = useState(1000);
-  const [sampleCount, setSampleCount] = useState(5); 
-  const [hoveredValue, setHoveredValue] = useState(null); // New state for hovered value
+  const [sampleCount, setSampleCount] = useState(5);
+  const [hoveredValue, setHoveredValue] = useState(null); 
+
+  const [manualSliderValue, setManualSliderValue] = useState('');
 
   const [chartData, setChartData] = useState(
     { name: 'linear', x: [1, 2, 3, 4], y: [3, 3, 3, 3] }
@@ -106,16 +108,26 @@ function App() {
     const numValues = Math.round(value);
     setSampleCount(numValues);
 
+    const resampledX = resampleArray(chartData.x, numValues);
     const resampledY = resampleArray(chartData.y, numValues);
 
     const newChartData = {
-      ...chartData,
+      name: 'new',
+      x: resampledX,
       y: resampledY,
     };
 
     setResampledChartData(newChartData);
   };
-  
+
+  const handleManualSliderChange = () => {
+    const enteredValue = parseInt(manualSliderValue);
+    if (!isNaN(enteredValue)) {
+      setSliderValue(enteredValue);
+      handleSliderChange(null, enteredValue);
+    }
+  };
+
   const handleSliderMouseEnter = (event) => {
     setHoveredValue(sliderValue);
   };
@@ -127,12 +139,12 @@ function App() {
   const resampleArray = (array, numValues) => {
     const resamplingFactor = (array.length - 1) / (numValues - 1);
     const resampledArray = [];
-  
+
     for (let i = 0; i < numValues; i++) {
       const index = Math.round(i * resamplingFactor);
       resampledArray.push(array[index]);
     }
-  
+
     return resampledArray;
   };
 
@@ -267,7 +279,7 @@ function App() {
           <Slider
             value={sliderValue}
             min={0}
-            max={2000}
+            max={chartData.x.length}
             onChange={handleSliderChange}
             aria-labelledby="continuous-slider"
             onMouseEnter={handleSliderMouseEnter}
@@ -276,6 +288,14 @@ function App() {
           {hoveredValue !== null && (
             <div className="hovered-value">{hoveredValue}</div>
           )}
+          <div className="manual-input">
+            <input
+              type="number"
+              value={manualSliderValue}
+              onChange={(e) => setManualSliderValue(e.target.value)}
+            />
+            <button onClick={handleManualSliderChange}>Set Value</button>
+          </div>
         </div>
       </div>
       <div className="Data1">
