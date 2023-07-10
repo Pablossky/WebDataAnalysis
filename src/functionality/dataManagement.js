@@ -6,17 +6,16 @@ function clearingDataText(dataToClear) {
       .replaceAll("]", " ")
       .replaceAll(/[nameeirvuxcel]/g, "");
 
-
     return readyText;
 }
 
 const copyDataToTxt = (chartData) => {
-  let textData = "X\tY\n"; // Add column headers
+  let textData = "X\tY\n"; 
 
   for (let i = 0; i < chartData.x.length; i++) {
     textData += chartData.x[i] + "\t" + chartData.y[i] + "\n";
   }
-  
+
   const blob = new Blob([textData], { type: "text/plain" });
   const tempUrl = window.URL.createObjectURL(blob);
   const link = document.createElement("a");

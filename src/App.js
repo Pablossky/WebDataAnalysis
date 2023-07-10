@@ -6,7 +6,7 @@ import "./functionality/dataManagement.js";
 import 'semantic-ui-css/semantic.min.css';
 import 'toolcool-range-slider';
 
-const dataManagement = require("./functionality/dataManagement.js");
+const dataManagement = require("./functionality/dataManagement");
 
 function App() {
   const XLSX = require('xlsx');
@@ -76,7 +76,7 @@ const handleFileUpload = (e) => {
     const newChartData = {
       ...chartData,
       x: newArray,
-      y: newArray, // Assuming the y-values should also be resampled in the same way
+      y: newArray,
     };
   
     setChartData(newChartData);
@@ -180,7 +180,7 @@ const handleFileUpload = (e) => {
     const rows = pastedData.split('\n').filter((row) => row.trim() !== '');
   
     const parsedData = rows.map((row) => {
-      const columns = row.split('\t'); // Adjust delimiter if needed
+      const columns = row.split('\t');
   
       return {
         X: columns[0] || '',
@@ -193,7 +193,7 @@ const handleFileUpload = (e) => {
   
     setChartData({ name: 'excel', x, y });
   
-    event.preventDefault(); // Prevent default paste behavior
+    event.preventDefault();
   };
 
   const renderGeneratedArray = () => {
