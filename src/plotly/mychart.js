@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo } from "react";
 import { ChartPlotly, dflt } from './chart-plotly';
 
 const config = {
@@ -57,43 +57,28 @@ const layout = (title, xlabel, ylabel) => {
   }
 };
 
-const labels = ['', 'xAxes', 'yAxes'];
+const labels = ['Chart', 'xAxis', 'yAxis']
 
-function Chart({ selectedMethod }) {
-  const [plotData, setPlotData] = useState([]);
-  const [plotLayout, setPlotLayout] = useState(layout(...labels));
+function Chart({data}){
 
-  // Update plotData and plotLayout whenever selectedMethod changes
-  useEffect(() => {
-    let newData;
-    let newLayout;
+    const plotData = useMemo(() => {
 
-    if (selectedMethod === 'linear') {
-      newData = [
-        { name: 'Linear Data', x: [1, 2, 3, 4], y: [4, 3, 2, 1] },
-      ];
-      newLayout = layout('Linear Chart', 'Linear X-axis', 'Linear Y-axis');
-    } else if (selectedMethod === 'curve') {
-      newData = [
-        { name: 'Curve Data', x: [1, 2, 3, 4], y: [1, 2, 3, 4] },
-      ];
-      newLayout = layout('Curve Chart', 'Curve X-axis', 'Curve Y-axis');
-    } else if (selectedMethod === 'excel') {
-      newData = [
-        { name: 'Excel Data', x: [], y: [] },
-      ];
-      newLayout = layout('Excel Chart', 'Excel X-axis', 'Excel Y-axis');
-    }
+      const pData = data.map(i => {
+        return {
+          x: i.x,
+          y: i.y,
+          name: i.name,
+          line: {width: 1},
+          marker: {size: 5, opacity: 0.8},
+          hovertemplate: '%{y:.2f}',
+        }
+      })
+      return pData
+    }, [data]);
 
-    setPlotData(newData);
-    setPlotLayout(newLayout);
-  }, [selectedMethod]);
-
-  return (
-    <div>
-      <ChartPlotly data={plotData} layout={plotLayout} config={dflt.config} />
-    </div>
-  );
+    return(
+        <ChartPlotly data={plotData} layout={layout(...labels)} config={config}/>
+    )
 }
 
-export default Chart;
+export default Chart
