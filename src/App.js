@@ -13,6 +13,7 @@ function App() {
   const XLSX = require('xlsx');
   const [sliderValue, setSliderValue] = useState(1000);
   const [sampleCount, setSampleCount] = useState(5); 
+  const [hoveredValue, setHoveredValue] = useState(null); // New state for hovered value
 
   const [chartData, setChartData] = useState(
     { name: 'linear', x: [1, 2, 3, 4], y: [3, 3, 3, 3] }
@@ -21,7 +22,6 @@ function App() {
   const [resampledChartData, setResampledChartData] = useState(
     { name: 'linear', x: [1, 2, 3, 4], y: [3, 3, 3, 3] }
   );
-
 
   function ResampledTable({ array1, array2, sampleCount }) {
     const resamplingFactor = array1.length / sampleCount;
@@ -116,6 +116,14 @@ function App() {
     setResampledChartData(newChartData);
   };
   
+  const handleSliderMouseEnter = (event) => {
+    setHoveredValue(sliderValue);
+  };
+
+  const handleSliderMouseLeave = (event) => {
+    setHoveredValue(null);
+  };
+
   const resampleArray = (array, numValues) => {
     const resamplingFactor = (array.length - 1) / (numValues - 1);
     const resampledArray = [];
@@ -127,8 +135,6 @@ function App() {
   
     return resampledArray;
   };
-
-
 
   const renderData = () => {
     if (selectedMethod === 'excel') {
@@ -194,7 +200,6 @@ function App() {
       );
     }
   };
-  
 
   const handlePaste = (event) => {
     const clipboardData = event.clipboardData || window.clipboardData;
@@ -216,7 +221,7 @@ function App() {
 
     setChartData({ name: 'excel', x, y });
 
-    event.preventDefaults();
+    event.preventDefault();
   };
 
   const renderGeneratedArray = () => {
@@ -230,7 +235,6 @@ function App() {
     );
   };
 
-  
   return (
     <div className="App">
       <div className="ChartPlotter">
@@ -259,13 +263,20 @@ function App() {
         />
         <div className="Space"></div>
         <div className="Space"></div>
-        <Slider
-          value={sliderValue}
-          min={0}
-          max={2000}
-          onChange={handleSliderChange}
-          aria-labelledby="continuous-slider"
-        />
+        <div className="slider-container">
+          <Slider
+            value={sliderValue}
+            min={0}
+            max={2000}
+            onChange={handleSliderChange}
+            aria-labelledby="continuous-slider"
+            onMouseEnter={handleSliderMouseEnter}
+            onMouseLeave={handleSliderMouseLeave}
+          />
+          {hoveredValue !== null && (
+            <div className="hovered-value">{hoveredValue}</div>
+          )}
+        </div>
       </div>
       <div className="Data1">
         Wklej dane:
