@@ -17,7 +17,7 @@ function App() {
   const [hoveredValue, setHoveredValue] = useState(null); 
   const [manualSliderValue, setManualSliderValue] = useState('');
   const [selectedSource, setSelectedSource] = useState('excel');
-  const [selectedInterpolation, setSelectedInterpolation] = useState('linear');
+  const [selectedInterpolation, setSelectedInterpolation] = useState('');
 
   const [chartData, setChartData] = useState(
     { name: 'linear', x: [1, 2, 3, 4], y: [3, 3, 3, 3] }
@@ -118,7 +118,7 @@ function App() {
     const numValues = Math.round(value);
     setSampleCount(numValues);
   
-    const method = selectedInterpolation === 'akima' ? 'akima' : 'linear';
+    const method = selectedInterpolation;
   
     const { x: resampledX, y: resampledY } = interpolateArray(
       chartData.x,
@@ -156,70 +156,70 @@ function App() {
 
 
 
-const renderData = () => {
-  if (selectedSource === 'excel') {
-    return (
-      <div>
-        {chartData.x.length > 0 && (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>X</th>
-                <th>Y</th>
-              </tr>
-            </thead>
-            <tbody>
-              {chartData.x.map((xValue, index) => (
-                <tr key={index}>
-                  <td>{xValue}</td>
-                  <td>{chartData.y[index]}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-    );
-  } else if (selectedSource === 'linear' || selectedSource === 'curve') {
-    const data = selectedSource === 'linear' ? dataLinear : dataCurve;
-    return (
-      <div style={{ display: 'flex' }}>
+  const renderData = () => {
+    if (selectedSource === 'excel') {
+      return (
         <div>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>X</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.x.map((item, index) => (
-                <tr key={index}>
-                  <td>{item}</td>
+          {chartData.x.length > 0 && (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>X</th>
+                  <th>Y</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {chartData.x.map((xValue, index) => (
+                  <tr key={index}>
+                    <td>{xValue}</td>
+                    <td>{chartData.y[index]}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
-        <div>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Y</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.y.map((item, index) => (
-                <tr key={index}>
-                  <td>{item}</td>
+      );
+    } else if (selectedSource === 'linear') {
+      return (
+        <div style={{ display: 'flex' }}>
+          <div>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>X</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {resampledChartData.x.map((item, index) => (
+                  <tr key={index}>
+                    <td>{item}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Y</th>
+                </tr>
+              </thead>
+              <tbody>
+                {resampledChartData.y.map((item, index) => (
+                  <tr key={index}>
+                    <td>{item}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
-    );
-  }
-};
+      );
+    }
+  };
+  
 
 
   const handlePaste = (event) => {
@@ -257,44 +257,41 @@ const renderData = () => {
   };
 
   
-    function interpolateArray(x, y, numValues, method) {
-      let interpolatedX, interpolatedY;
-    
-      if (method === 'linear') {
-        interpolatedX = [];
-        interpolatedY = [];
-    
-        for (let i = 0; i < x.length - 1; i++) {
-          interpolatedX.push(x[i]);
-          interpolatedY.push(y[i]);
-
-          console.log(interpolatedX);
-    
-          const xStep = (x[i + 1] - x[i])/numValues;
-          const yStep = (y[i + 1] - y[i])/numValues;
-    
-          for (let j = 1; j < numValues; j++) {
-            const newX = x[i] + j * xStep;
-            const newY = y[i] + j * yStep;
-            interpolatedX.push(newX);
-            interpolatedY.push(newY);
-          }
+  function interpolateArray(x, y, numValues, method) {
+    let interpolatedX, interpolatedY;
+  
+    if (method === 'linear') {
+      interpolatedX = [];
+      interpolatedY = [];
+  
+      for (let i = 0; i < x.length - 1; i++) {
+        interpolatedX.push(x[i]);
+        interpolatedY.push(y[i]);
+  
+        const xStep = (x[i + 1] - x[i]) / (numValues - 1);
+        const yStep = (y[i + 1] - y[i]) / (numValues - 1);
+  
+        for (let j = 1; j < numValues - 1; j++) {
+          const newX = x[i] + j * xStep;
+          const newY = y[i] + j * yStep;
+          interpolatedX.push(newX);
+          interpolatedY.push(newY);
         }
-    
-        interpolatedX.push(x[x.length - 1]);
-        interpolatedY.push(y[y.length - 1]);
-        
+      }
+  
+      interpolatedX.push(x[x.length - 1]);
+      interpolatedY.push(y[y.length - 1]);
     } else if (method === 'akima') {
       const interpolator = numeric.spline(x, y, 'akima');
   
       interpolatedX = numeric.linspace(x[0], x[x.length - 1], numValues);
       interpolatedY = interpolatedX.map((value) => interpolator.at(value));
+    } else {
+      throw new Error(`Unsupported interpolation method: ${method}`);
     }
   
     return { x: interpolatedX, y: interpolatedY };
   }
-  
-  
 
   return (
     <div className="App">
