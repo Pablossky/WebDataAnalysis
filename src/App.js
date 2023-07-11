@@ -8,6 +8,7 @@ import 'toolcool-range-slider';
 import Slider from '@mui/material/Slider';
 
 const dataManagement = require("./functionality/dataManagement");
+const numeric = require('numeric');
 
 function App() {
   const XLSX = require('xlsx');
@@ -85,6 +86,7 @@ function App() {
 
   const interpolationMethod = [
     { key: '1', text: 'Linear', value: 'linear' },
+    { key: '2', text: 'Akima', value: 'akima' },
   ];
 
   const dataLinear = { name: 'Linear', x: [1, 2, 3, 4], y: [3, 3, 3, 3] };
@@ -108,10 +110,6 @@ function App() {
 
   const handleInterpolationChange = (event, { value }) => {
     setSelectedInterpolation(value);
-
-    if (value === 'linear') {
-      setSelectedInterpolation();
-    }
   };
 
   const handleSliderChange = (event, value) => {
@@ -120,10 +118,14 @@ function App() {
     const numValues = Math.round(value);
     setSampleCount(numValues);
   
-    let resampledX, resampledY;
+    const method = selectedInterpolation === 'akima' ? 'akima' : 'linear';
   
-    resampledX = resampleArray(chartData.x, numValues);
-    resampledY = resampleArray(chartData.y, numValues);
+    const { x: resampledX, y: resampledY } = interpolateArray(
+      chartData.x,
+      chartData.y,
+      numValues,
+      method
+    );
   
     const newChartData = {
       name: 'Interpolated/Resampled',
@@ -133,6 +135,7 @@ function App() {
   
     setResampledChartData(newChartData);
   };
+  
   
 
   const handleManualSliderChange = () => {
@@ -151,89 +154,73 @@ function App() {
     setHoveredValue(null);
   };
 
- const resampleArray = (array, numValues) => {
-  const resamplingFactor = (array.length - 1) / (numValues - 1);
-  const resampledArray = [];
 
-  for (let i = 0; i < numValues; i++) {
-    const index = i * resamplingFactor;
-    const lowerIndex = Math.floor(index);
-    const upperIndex = Math.ceil(index);
 
-    const lowerValue = array[lowerIndex];
-    const upperValue = array[upperIndex];
-
-    const interpolatedValue = lowerValue + (upperValue - lowerValue) * (index - lowerIndex);
-    resampledArray.push(interpolatedValue);
+const renderData = () => {
+  if (selectedSource === 'excel') {
+    return (
+      <div>
+        {chartData.x.length > 0 && (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>X</th>
+                <th>Y</th>
+              </tr>
+            </thead>
+            <tbody>
+              {chartData.x.map((xValue, index) => (
+                <tr key={index}>
+                  <td>{xValue}</td>
+                  <td>{chartData.y[index]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    );
+  } else if (selectedSource === 'linear' || selectedSource === 'curve') {
+    const data = selectedSource === 'linear' ? dataLinear : dataCurve;
+    return (
+      <div style={{ display: 'flex' }}>
+        <div>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>X</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.x.map((item, index) => (
+                <tr key={index}>
+                  <td>{item}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Y</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.y.map((item, index) => (
+                <tr key={index}>
+                  <td>{item}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
   }
-
-  return resampledArray;
 };
 
-  const renderData = () => {
-    if (selectedSource === 'excel') {
-      return (
-        <div>
-          {chartData.x.length > 0 && (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>X</th>
-                  <th>Y</th>
-                </tr>
-              </thead>
-              <tbody>
-                {chartData.x.map((xValue, index) => (
-                  <tr key={index}>
-                    <td>{xValue}</td>
-                    <td>{chartData.y[index]}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      );
-    } else if (selectedSource === 'linear' || selectedSource === 'curve') {
-      const data = selectedSource === 'linear' ? dataLinear : dataCurve;
-      return (
-        <div style={{ display: 'flex' }}>
-          <div>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>X</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.x.map((item, index) => (
-                  <tr key={index}>
-                    <td>{item}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Y</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.y.map((item, index) => (
-                  <tr key={index}>
-                    <td>{item}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      );
-    }
-  };
 
   const handlePaste = (event) => {
     const clipboardData = event.clipboardData || window.clipboardData;
@@ -259,9 +246,9 @@ function App() {
   };
 
   const renderGeneratedArray = () => {
-    const array1 = chartData.x;
-    const array2 = chartData.y;
-
+    const array1 = resampledChartData.x;
+    const array2 = resampledChartData.y;
+  
     return (
       <div>
         <ResampledTable array1={array1} array2={array2} sampleCount={sampleCount} />
@@ -269,27 +256,40 @@ function App() {
     );
   };
 
-  function interpolateArray(x, y, numValues) {
-    const interpolatedX = [];
-    const interpolatedY = [];
   
-    for (let i = 0; i < x.length - 1; i++) {
-      interpolatedX.push(x[i]);
-      interpolatedY.push(y[i]);
+    function interpolateArray(x, y, numValues, method) {
+      let interpolatedX, interpolatedY;
+    
+      if (method === 'linear') {
+        interpolatedX = [];
+        interpolatedY = [];
+    
+        for (let i = 0; i < x.length - 1; i++) {
+          interpolatedX.push(x[i]);
+          interpolatedY.push(y[i]);
+
+          console.log(interpolatedX);
+    
+          const xStep = (x[i + 1] - x[i])/numValues;
+          const yStep = (y[i + 1] - y[i])/numValues;
+    
+          for (let j = 1; j < numValues; j++) {
+            const newX = x[i] + j * xStep;
+            const newY = y[i] + j * yStep;
+            interpolatedX.push(newX);
+            interpolatedY.push(newY);
+          }
+        }
+    
+        interpolatedX.push(x[x.length - 1]);
+        interpolatedY.push(y[y.length - 1]);
+        
+    } else if (method === 'akima') {
+      const interpolator = numeric.spline(x, y, 'akima');
   
-      const xStep = (x[i + 1] - x[i]) / (numValues - 1);
-      const yStep = (y[i + 1] - y[i]) / (numValues - 1);
-  
-      for (let j = 1; j < numValues - 1; j++) {
-        const newX = Math.round(x[i] + j * xStep);
-        const newY = Math.round(y[i] + j * yStep);
-        interpolatedX.push(newX);
-        interpolatedY.push(newY);
-      }
+      interpolatedX = numeric.linspace(x[0], x[x.length - 1], numValues);
+      interpolatedY = interpolatedX.map((value) => interpolator.at(value));
     }
-  
-    interpolatedX.push(x[x.length - 1]);
-    interpolatedY.push(y[y.length - 1]);
   
     return { x: interpolatedX, y: interpolatedY };
   }
@@ -336,7 +336,7 @@ function App() {
           <Slider
             value={sliderValue}
             min={0}
-            max={4*chartData.x.length}
+            max={8*chartData.x.length}
             onChange={handleSliderChange}
             aria-labelledby="continuous-slider"
             onMouseEnter={handleSliderMouseEnter}
