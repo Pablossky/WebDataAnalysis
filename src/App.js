@@ -14,8 +14,9 @@ function App() {
   const [sliderValue, setSliderValue] = useState(1000);
   const [sampleCount, setSampleCount] = useState(5);
   const [hoveredValue, setHoveredValue] = useState(null); 
-
   const [manualSliderValue, setManualSliderValue] = useState('');
+  const [selectedSource, setSelectedSource] = useState('excel');
+  const [selectedInterpolation, setSelectedInterpolation] = useState('linear');
 
   const [chartData, setChartData] = useState(
     { name: 'linear', x: [1, 2, 3, 4], y: [3, 3, 3, 3] }
@@ -75,19 +76,22 @@ function App() {
       setChartData({ name: 'excel', x, y })
     };
   }
-  const interpolationMethod = [
+
+  const dataSource = [
     { key: '1', text: 'Linear', value: 'linear' },
     { key: '2', text: 'Curve', value: 'curve' },
     { key: '3', text: 'Excel', value: 'excel' },
   ];
 
+  const interpolationMethod = [
+    { key: '1', text: 'Linear', value: 'linear' },
+  ];
+
   const dataLinear = { name: 'Linear', x: [1, 2, 3, 4], y: [3, 3, 3, 3] };
   const dataCurve = { name: 'Curve', x: [1, 2, 3, 4], y: [2, 5, 6, 7] };
 
-  const [selectedMethod, setSelectedMethod] = useState('excel');
-
   const handleDropdownChange = (event, { value }) => {
-    setSelectedMethod(value);
+    setSelectedSource(value);
 
     if (value === 'excel') {
       setChartData({
@@ -102,23 +106,34 @@ function App() {
     }
   };
 
+  const handleInterpolationChange = (event, { value }) => {
+    setSelectedInterpolation(value);
+
+    if (value === 'linear') {
+      setSelectedInterpolation();
+    }
+  };
+
   const handleSliderChange = (event, value) => {
     setSliderValue(value);
-
+  
     const numValues = Math.round(value);
     setSampleCount(numValues);
-
-    const resampledX = resampleArray(chartData.x, numValues);
-    const resampledY = resampleArray(chartData.y, numValues);
-
+  
+    let resampledX, resampledY;
+  
+    resampledX = resampleArray(chartData.x, numValues);
+    resampledY = resampleArray(chartData.y, numValues);
+  
     const newChartData = {
-      name: 'new',
+      name: 'Interpolated/Resampled',
       x: resampledX,
       y: resampledY,
     };
-
+  
     setResampledChartData(newChartData);
   };
+  
 
   const handleManualSliderChange = () => {
     const enteredValue = parseInt(manualSliderValue);
@@ -136,20 +151,27 @@ function App() {
     setHoveredValue(null);
   };
 
-  const resampleArray = (array, numValues) => {
-    const resamplingFactor = (array.length - 1) / (numValues - 1);
-    const resampledArray = [];
+ const resampleArray = (array, numValues) => {
+  const resamplingFactor = (array.length - 1) / (numValues - 1);
+  const resampledArray = [];
 
-    for (let i = 0; i < numValues; i++) {
-      const index = Math.round(i * resamplingFactor);
-      resampledArray.push(array[index]);
-    }
+  for (let i = 0; i < numValues; i++) {
+    const index = i * resamplingFactor;
+    const lowerIndex = Math.floor(index);
+    const upperIndex = Math.ceil(index);
 
-    return resampledArray;
-  };
+    const lowerValue = array[lowerIndex];
+    const upperValue = array[upperIndex];
+
+    const interpolatedValue = lowerValue + (upperValue - lowerValue) * (index - lowerIndex);
+    resampledArray.push(interpolatedValue);
+  }
+
+  return resampledArray;
+};
 
   const renderData = () => {
-    if (selectedMethod === 'excel') {
+    if (selectedSource === 'excel') {
       return (
         <div>
           {chartData.x.length > 0 && (
@@ -172,8 +194,8 @@ function App() {
           )}
         </div>
       );
-    } else if (selectedMethod === 'linear' || selectedMethod === 'curve') {
-      const data = selectedMethod === 'linear' ? dataLinear : dataCurve;
+    } else if (selectedSource === 'linear' || selectedSource === 'curve') {
+      const data = selectedSource === 'linear' ? dataLinear : dataCurve;
       return (
         <div style={{ display: 'flex' }}>
           <div>
@@ -247,6 +269,33 @@ function App() {
     );
   };
 
+  function interpolateArray(x, y, numValues) {
+    const interpolatedX = [];
+    const interpolatedY = [];
+  
+    for (let i = 0; i < x.length - 1; i++) {
+      interpolatedX.push(x[i]);
+      interpolatedY.push(y[i]);
+  
+      const xStep = (x[i + 1] - x[i]) / (numValues - 1);
+      const yStep = (y[i + 1] - y[i]) / (numValues - 1);
+  
+      for (let j = 1; j < numValues - 1; j++) {
+        const newX = Math.round(x[i] + j * xStep);
+        const newY = Math.round(y[i] + j * yStep);
+        interpolatedX.push(newX);
+        interpolatedY.push(newY);
+      }
+    }
+  
+    interpolatedX.push(x[x.length - 1]);
+    interpolatedY.push(y[y.length - 1]);
+  
+    return { x: interpolatedX, y: interpolatedY };
+  }
+  
+  
+
   return (
     <div className="App">
       <div className="ChartPlotter">
@@ -265,21 +314,29 @@ function App() {
           />
         </div>
         <div className="Space"></div>
-        Wybierz metodę:
+        Źródło danych:
+        <Dropdown
+          placeholder="Choose method"
+          selection
+          options={dataSource}
+          value={selectedSource}
+          onChange={handleDropdownChange}
+        />
+        <div className="Space"></div>
+        Metoda interpolacji:
         <Dropdown
           placeholder="Choose method"
           selection
           options={interpolationMethod}
-          value={selectedMethod}
-          onChange={handleDropdownChange}
+          value={selectedInterpolation}
+          onChange={handleInterpolationChange}
         />
-        <div className="Space"></div>
         <div className="Space"></div>
         <div className="slider-container">
           <Slider
             value={sliderValue}
             min={0}
-            max={chartData.x.length}
+            max={4*chartData.x.length}
             onChange={handleSliderChange}
             aria-labelledby="continuous-slider"
             onMouseEnter={handleSliderMouseEnter}
@@ -338,7 +395,7 @@ function App() {
               }}
             >
               <h1>Original</h1>
-              <div>{renderData(selectedMethod)}</div>
+              <div>{renderData(selectedSource)}</div>
             </div>
           </div>
         </div>
