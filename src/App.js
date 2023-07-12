@@ -39,6 +39,7 @@ function App() {
     name: 'offsetted',
     x: [],
     y: []
+    
   });
 
   function interpolateArray(x, y, numValues, method) {
