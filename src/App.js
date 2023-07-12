@@ -11,13 +11,14 @@ const dataManagement = require("./functionality/dataManagement");
 const numeric = require('numeric');
 
 function App() {
+
   const XLSX = require('xlsx');
   const [sliderValue, setSliderValue] = useState(1000);
   const [sampleCount, setSampleCount] = useState(5);
   const [hoveredValue, setHoveredValue] = useState(null);
   const [manualSliderValue, setManualSliderValue] = useState('');
   const [selectedSource, setSelectedSource] = useState('excel');
-  const [selectedInterpolation, setSelectedInterpolation] = useState('');
+  const [selectedInterpolation, setSelectedInterpolation] = useState('linear');
 
   const [chartData, setChartData] = useState({
     name: 'linear',
@@ -38,8 +39,8 @@ function App() {
 
     for (let i = 0; i < sampleCount; i++) {
       const index = Math.round(i * resamplingFactor);
-      resampledArray1.push(array1[index]);
-      resampledArray2.push(array2[index]);
+      resampledArray1.push(array1[index].toFixed(3));
+      resampledArray2.push(array2[index].toFixed(3));
     }
 
     return (
@@ -62,25 +63,33 @@ function App() {
     );
   }
 
-  const handleFileUpload = (e) => {
-    const reader = new FileReader();
-    reader.readAsBinaryString(e.target.files[0]);
-    reader.onload = (e) => {
-      const data = e.target.result;
-      const workbook = XLSX.read(data, { type: "binary" });
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const parsedData = XLSX.utils.sheet_to_json(sheet);
-      console.log(parsedData);
+  function interpolateArray(x, y, numValues, method) {
+    let interpolatedX, interpolatedY;
 
-      const x = [];
-      const y = [];
-      parsedData.forEach((o) => { x.push(o.X); y.push(o.Y) })
-      console.log(x);
+    if (method === 'linear') {
+      interpolatedX = [];
+      interpolatedY = [];
 
-      setChartData({ name: 'excel', x, y });
-    };
-  };
+      for (let i = 0; i < numValues; i++) {
+        const fraction = i / (numValues - 1);
+        const index = Math.floor(fraction * (x.length - 1));
+        const dx = fraction * (x[x.length - 1] - x[0]);
+        const interpolatedXValue = x[0] + dx;
+        const interpolatedYValue = y[index] + (y[index + 1] - y[index]) * (dx - x[index]) / (x[index + 1] - x[index]);
+        interpolatedX.push(interpolatedXValue);
+        interpolatedY.push(interpolatedYValue);
+      }
+    } else if (method === 'akima') {
+      const interpolator = numeric.spline(x, y, 'akima');
+
+      interpolatedX = numeric.linspace(x[0], x[x.length - 1], numValues);
+      interpolatedY = interpolatedX.map((value) => interpolator.at(value));
+    } else {
+      throw new Error(`Unsupported interpolation method: ${method}`);
+    }
+
+    return { x: interpolatedX, y: interpolatedY };
+  }
 
   const dataSource = [
     { key: '1', text: 'Linear', value: 'linear' },
@@ -92,6 +101,26 @@ function App() {
     { key: '1', text: 'Linear', value: 'linear' },
     { key: '2', text: 'Akima', value: 'akima' },
   ];
+
+  const handleFileUpload = (e) => {
+    const reader = new FileReader();
+    reader.readAsBinaryString(e.target.files[0]);
+    reader.onload = (e) => {
+      const data = e.target.result;
+      const workbook = XLSX.read(data, { type: 'binary' });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const parsedData = XLSX.utils.sheet_to_json(sheet);
+  
+      const x = parsedData.map((item) => parseFloat(item.X));
+      const y = parsedData.map((item) => parseFloat(item.Y));
+  
+      console.log(x);
+  
+      setChartData({ name: 'Your Data', x, y });
+    };
+  };
+  
 
   const handleDropdownChange = (event, { value }) => {
     setSelectedSource(value);
@@ -175,6 +204,29 @@ function App() {
     setHoveredValue(null);
   };
 
+  const handlePaste = (event) => {
+    const clipboardData = event.clipboardData || window.clipboardData;
+    const pastedData = clipboardData.getData('text');
+
+    const rows = pastedData.split('\n').filter((row) => row.trim() !== '');
+
+    const parsedData = rows.map((row) => {
+      const columns = row.split('\t');
+
+      return {
+        X: parseFloat(columns[0]) || 0,
+        Y: parseFloat(columns[1]) || 0,
+      };
+    });
+
+    const x = parsedData.map((item) => item.X);
+    const y = parsedData.map((item) => item.Y);
+
+    setChartData({ name: 'excel', x, y });
+
+    event.preventDefault();
+  };
+
   const renderData = () => {
     if (selectedSource === 'excel') {
       return (
@@ -190,8 +242,8 @@ function App() {
               <tbody>
                 {chartData.x.map((xValue, index) => (
                   <tr key={index}>
-                    <td>{xValue}</td>
-                    <td>{chartData.y[index]}</td>
+                    <td>{xValue.toFixed(3)}</td>
+                    <td>{chartData.y[index].toFixed(3)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -212,7 +264,7 @@ function App() {
               <tbody>
                 {resampledChartData.x.map((item, index) => (
                   <tr key={index}>
-                    <td>{item}</td>
+                    <td>{item.toFixed(3)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -228,7 +280,7 @@ function App() {
               <tbody>
                 {resampledChartData.y.map((item, index) => (
                   <tr key={index}>
-                    <td>{item}</td>
+                    <td>{item.toFixed(3)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -237,29 +289,6 @@ function App() {
         </div>
       );
     }
-  };
-
-  const handlePaste = (event) => {
-    const clipboardData = event.clipboardData || window.clipboardData;
-    const pastedData = clipboardData.getData('text');
-  
-    const rows = pastedData.split('\n').filter((row) => row.trim() !== '');
-  
-    const parsedData = rows.map((row) => {
-      const columns = row.split('\t');
-  
-      return {
-        X: parseFloat(columns[0]) || 0,
-        Y: parseFloat(columns[1]) || 0,
-      };
-    });
-  
-    const x = parsedData.map((item) => item.X);
-    const y = parsedData.map((item) => item.Y);
-  
-    setChartData({ name: 'excel', x, y });
-  
-    event.preventDefault();
   };
 
   const renderGeneratedArray = () => {
@@ -272,34 +301,6 @@ function App() {
       </div>
     );
   };
-
-  function interpolateArray(x, y, numValues, method) {
-    let interpolatedX, interpolatedY;
-
-    if (method === 'linear') {
-      interpolatedX = [];
-      interpolatedY = [];
-
-      for (let i = 0; i < numValues; i++) {
-        const fraction = i / (numValues - 1);
-        const index = Math.floor(fraction * (x.length - 1));
-        const dx = fraction * (x[x.length - 1] - x[0]);
-        const interpolatedXValue = x[0] + dx;
-        const interpolatedYValue = y[index] + (y[index + 1] - y[index]) * (dx - x[index]) / (x[index + 1] - x[index]);
-        interpolatedX.push(interpolatedXValue);
-        interpolatedY.push(interpolatedYValue);
-      }
-    } else if (method === 'akima') {
-      const interpolator = numeric.spline(x, y, 'akima');
-
-      interpolatedX = numeric.linspace(x[0], x[x.length - 1], numValues);
-      interpolatedY = interpolatedX.map((value) => interpolator.at(value));
-    } else {
-      throw new Error(`Unsupported interpolation method: ${method}`);
-    }
-
-    return { x: interpolatedX, y: interpolatedY };
-  }
 
   return (
     <div className="App">
@@ -358,7 +359,7 @@ function App() {
             />
             <button onClick={handleManualSliderChange}>Set Value</button>
           </div>
-          
+
         </div>
       </div>
       <div className="Data1">
