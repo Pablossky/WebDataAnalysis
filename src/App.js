@@ -3,15 +3,16 @@ import React, { useState } from 'react';
 import { Dropdown } from 'semantic-ui-react';
 import Chart from "./plotly/mychart.js";
 import "./functionality/dataManagement.js";
+import "./functionality/plottingData.js";
 import 'semantic-ui-css/semantic.min.css';
 import 'toolcool-range-slider';
 import Slider from '@mui/material/Slider';
+import ResampledTable from './functionality/plottingData.js';
 
 const dataManagement = require("./functionality/dataManagement");
 const numeric = require('numeric');
 
 function App() {
-
   const XLSX = require('xlsx');
   const [sliderValue, setSliderValue] = useState(1000);
   const [sampleCount, setSampleCount] = useState(5);
@@ -19,6 +20,8 @@ function App() {
   const [manualSliderValue, setManualSliderValue] = useState('');
   const [selectedSource, setSelectedSource] = useState('excel');
   const [selectedInterpolation, setSelectedInterpolation] = useState('linear');
+  const [offset, setOffset] = useState(0);
+  const [hoveredOffset, setHoveredOffset] = useState(0);
 
   const [chartData, setChartData] = useState({
     name: 'linear',
@@ -32,36 +35,11 @@ function App() {
     y: [3, 3, 3, 3]
   });
 
-  function ResampledTable({ array1, array2, sampleCount }) {
-    const resamplingFactor = array1.length / sampleCount;
-    const resampledArray1 = [];
-    const resampledArray2 = [];
-
-    for (let i = 0; i < sampleCount; i++) {
-      const index = Math.round(i * resamplingFactor);
-      resampledArray1.push(array1[index].toFixed(3));
-      resampledArray2.push(array2[index].toFixed(3));
-    }
-
-    return (
-      <table className="table">
-        <thead>
-          <tr>
-            <th>X</th>
-            <th>Y</th>
-          </tr>
-        </thead>
-        <tbody>
-          {resampledArray1.map((value, index) => (
-            <tr key={index}>
-              <td>{value}</td>
-              <td>{resampledArray2[index]}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    );
-  }
+  const [offsettedChartData, setOffsettedChartData] = useState({
+    name: 'offsetted',
+    x: [],
+    y: []
+  });
 
   function interpolateArray(x, y, numValues, method) {
     let interpolatedX, interpolatedY;
@@ -95,6 +73,7 @@ function App() {
     { key: '1', text: 'Linear', value: 'linear' },
     { key: '2', text: 'Curve', value: 'curve' },
     { key: '3', text: 'Excel', value: 'excel' },
+    { key: '4', text: 'Interpolated', value: 'interpolated' },
   ];
 
   const interpolationMethod = [
@@ -111,16 +90,13 @@ function App() {
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
       const parsedData = XLSX.utils.sheet_to_json(sheet);
-  
+
       const x = parsedData.map((item) => parseFloat(item.X));
       const y = parsedData.map((item) => parseFloat(item.Y));
-  
-      console.log(x);
-  
+
       setChartData({ name: 'Your Data', x, y });
     };
   };
-  
 
   const handleDropdownChange = (event, { value }) => {
     setSelectedSource(value);
@@ -135,11 +111,39 @@ function App() {
       setChartData({ name: 'linear', x: [1, 2, 3, 4], y: [3, 3, 3, 3] });
     } else if (value === 'curve') {
       setChartData({ name: 'curve', x: [1, 2, 3, 4], y: [2, 5, 6, 7] });
+    } else if (value === 'interpolated') {
+      const { x: interpolatedX, y: interpolatedY } = interpolateArray(
+        chartData.x,
+        chartData.y,
+        chartData.x.length,
+        selectedInterpolation
+      );
+      const interpolatedChartData = {
+        name: 'Interpolated',
+        x: interpolatedX,
+        y: interpolatedY,
+      };
+      setChartData(interpolatedChartData);
     }
   };
 
   const handleInterpolationChange = (event, { value }) => {
     setSelectedInterpolation(value);
+
+    if (selectedSource === 'interpolated') {
+      const { x: interpolatedX, y: interpolatedY } = interpolateArray(
+        chartData.x,
+        chartData.y,
+        chartData.x.length,
+        value
+      );
+      const interpolatedChartData = {
+        name: 'Interpolated',
+        x: interpolatedX,
+        y: interpolatedY,
+      };
+      setChartData(interpolatedChartData);
+    }
   };
 
   const handleSliderChange = (event, value) => {
@@ -188,11 +192,37 @@ function App() {
     setResampledChartData(newChartData);
   };
 
-  const handleManualSliderChange = () => {
-    const enteredValue = parseInt(manualSliderValue);
+  const handleOffsetSliderChange = (event, value) => {
+    setOffset(value);
+
+    const numValues = Math.round(sliderValue);
+    const resamplingFactor = (chartData.x.length - 1) / (numValues - 1);
+    const startIndex = Math.floor(value * resamplingFactor);
+    const offsettedX = resampledChartData.x.slice(startIndex, startIndex + numValues);
+    const offsettedY = resampledChartData.y.slice(startIndex, startIndex + numValues);
+
+    const offsettedChartData = {
+      name: 'Offsetted',
+      x: offsettedX,
+      y: offsettedY,
+    };
+
+    setOffsettedChartData(offsettedChartData);
+  };
+
+  const handleManualSliderChange = (e) => {
+    const enteredValue = parseInt(e.target.value);
     if (!isNaN(enteredValue)) {
+      setManualSliderValue(enteredValue.toString());
       setSliderValue(enteredValue);
-      handleSliderChange(null, enteredValue);
+      setSampleCount(enteredValue);
+    }
+  };
+
+  const handleOffsetManualSliderChange = (e) => {
+    const enteredValue = parseInt(e.target.value);
+    if (!isNaN(enteredValue)) {
+      setOffset(enteredValue);
     }
   };
 
@@ -200,8 +230,16 @@ function App() {
     setHoveredValue(sliderValue);
   };
 
+  const handleOffsetSliderMouseEnter = (event) => {
+    setHoveredOffset(offset);
+  };
+
   const handleSliderMouseLeave = (event) => {
     setHoveredValue(null);
+  };
+
+  const handleOffsetSliderMouseLeave = (event) => {
+    setHoveredOffset(null);
   };
 
   const handlePaste = (event) => {
@@ -253,48 +291,57 @@ function App() {
       );
     } else if (selectedSource === 'linear') {
       return (
-        <div style={{ display: 'flex' }}>
-          <div>
+        <div>
+          {chartData.x.length > 0 && (
             <table className="table">
               <thead>
                 <tr>
                   <th>X</th>
-                </tr>
-              </thead>
-              <tbody>
-                {resampledChartData.x.map((item, index) => (
-                  <tr key={index}>
-                    <td>{item.toFixed(3)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div>
-            <table className="table">
-              <thead>
-                <tr>
                   <th>Y</th>
                 </tr>
               </thead>
               <tbody>
-                {resampledChartData.y.map((item, index) => (
+                {chartData.x.map((xValue, index) => (
                   <tr key={index}>
-                    <td>{item.toFixed(3)}</td>
+                    <td>{xValue.toFixed(3)}</td>
+                    <td>{chartData.y[index].toFixed(3)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          )}
+        </div>
+      );
+    } else if (selectedSource === 'interpolated') {
+      return (
+        <div>
+          {chartData.x.length > 0 && (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Interpolated X</th>
+                  <th>Interpolated Y</th>
+                </tr>
+              </thead>
+              <tbody>
+                {chartData.x.map((xValue, index) => (
+                  <tr key={index}>
+                    <td>{xValue.toFixed(3)}</td>
+                    <td>{chartData.y[index].toFixed(3)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       );
     }
   };
-
+  
   const renderGeneratedArray = () => {
-    const array1 = resampledChartData.x;
-    const array2 = resampledChartData.y;
-
+    const array1 = resampledChartData.x.slice(offset, offset + sampleCount);
+    const array2 = resampledChartData.y.slice(offset, offset + sampleCount);
+  
     return (
       <div>
         <ResampledTable array1={array1} array2={array2} sampleCount={sampleCount} />
@@ -306,7 +353,7 @@ function App() {
     <div className="App">
       <div className="ChartPlotter">
         <div>
-          <Chart data={[chartData, resampledChartData]} />
+        <Chart data={[chartData, resampledChartData, offsettedChartData]} />
         </div>
       </div>
       <div className="Options">
@@ -339,26 +386,49 @@ function App() {
         />
         <div className="Space"></div>
         <div className="slider-container">
-          <Slider
-            value={sliderValue}
-            min={0}
-            max={8 * chartData.x.length}
-            onChange={handleSliderChange}
-            aria-labelledby="continuous-slider"
-            onMouseEnter={handleSliderMouseEnter}
-            onMouseLeave={handleSliderMouseLeave}
-          />
-          {hoveredValue !== null && (
-            <div className="hovered-value">{hoveredValue}</div>
-          )}
-          <div className="manual-input">
-            <input
-              type="number"
-              value={manualSliderValue}
-              onChange={(e) => setManualSliderValue(e.target.value)}
-            />
-            <button onClick={handleManualSliderChange}>Set Value</button>
-          </div>
+  <Slider
+    value={sliderValue}
+    min={0}
+    max={8 * chartData.x.length}
+    onChange={handleSliderChange}
+    aria-labelledby="continuous-slider"
+    onMouseEnter={handleSliderMouseEnter}
+    onMouseLeave={handleSliderMouseLeave}
+  />
+  {hoveredValue !== null && (
+    <div className="hovered-value">{hoveredValue}</div>
+  )}
+  <div className="manual-input">
+    <input
+      type="number"
+      value={manualSliderValue}
+      onChange={handleManualSliderChange}
+      onBlur={handleManualSliderChange}
+    />
+  </div>
+</div>
+
+<div className="offset-slider-container">
+  <Slider
+    value={offset}
+    min={0}
+    max={(sliderValue/2) - 1}
+    onChange={handleOffsetSliderChange}
+    aria-labelledby="continuous-slider"
+    onMouseEnter={handleOffsetSliderMouseEnter}
+    onMouseLeave={handleOffsetSliderMouseLeave}
+  />
+  {hoveredOffset !== null && (
+    <div className="hovered-offset">{hoveredOffset}</div>
+  )}
+  <div className="manual-input">
+    <input
+      type="number"
+      value={offset}
+      onChange={handleOffsetManualSliderChange}
+      onBlur={handleOffsetManualSliderChange}
+    />
+  </div>
 
         </div>
       </div>
