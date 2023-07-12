@@ -14,18 +14,22 @@ function App() {
   const XLSX = require('xlsx');
   const [sliderValue, setSliderValue] = useState(1000);
   const [sampleCount, setSampleCount] = useState(5);
-  const [hoveredValue, setHoveredValue] = useState(null); 
+  const [hoveredValue, setHoveredValue] = useState(null);
   const [manualSliderValue, setManualSliderValue] = useState('');
   const [selectedSource, setSelectedSource] = useState('excel');
   const [selectedInterpolation, setSelectedInterpolation] = useState('');
 
-  const [chartData, setChartData] = useState(
-    { name: 'linear', x: [1, 2, 3, 4], y: [3, 3, 3, 3] }
-  )
+  const [chartData, setChartData] = useState({
+    name: 'linear',
+    x: [1, 2, 3, 4],
+    y: [3, 3, 3, 3]
+  });
 
-  const [resampledChartData, setResampledChartData] = useState(
-    { name: 'linear', x: [1, 2, 3, 4], y: [3, 3, 3, 3] }
-  );
+  const [resampledChartData, setResampledChartData] = useState({
+    name: 'linear',
+    x: [1, 2, 3, 4],
+    y: [3, 3, 3, 3]
+  });
 
   function ResampledTable({ array1, array2, sampleCount }) {
     const resamplingFactor = array1.length / sampleCount;
@@ -74,9 +78,9 @@ function App() {
       parsedData.forEach((o) => { x.push(o.X); y.push(o.Y) })
       console.log(x);
 
-      setChartData({ name: 'excel', x, y })
+      setChartData({ name: 'excel', x, y });
     };
-  }
+  };
 
   const dataSource = [
     { key: '1', text: 'Linear', value: 'linear' },
@@ -89,9 +93,6 @@ function App() {
     { key: '2', text: 'Akima', value: 'akima' },
   ];
 
-  const dataLinear = { name: 'Linear', x: [1, 2, 3, 4], y: [3, 3, 3, 3] };
-  const dataCurve = { name: 'Curve', x: [1, 2, 3, 4], y: [2, 5, 6, 7] };
-
   const handleDropdownChange = (event, { value }) => {
     setSelectedSource(value);
 
@@ -102,9 +103,9 @@ function App() {
         y: chartData.y,
       });
     } else if (value === 'linear') {
-      setChartData(dataLinear);
+      setChartData({ name: 'linear', x: [1, 2, 3, 4], y: [3, 3, 3, 3] });
     } else if (value === 'curve') {
-      setChartData(dataCurve);
+      setChartData({ name: 'curve', x: [1, 2, 3, 4], y: [2, 5, 6, 7] });
     }
   };
 
@@ -114,29 +115,49 @@ function App() {
 
   const handleSliderChange = (event, value) => {
     setSliderValue(value);
-  
     const numValues = Math.round(value);
     setSampleCount(numValues);
-  
-    const method = selectedInterpolation;
-  
-    const { x: resampledX, y: resampledY } = interpolateArray(
-      chartData.x,
-      chartData.y,
-      numValues,
-      method
-    );
-  
+
+    let resampledX, resampledY;
+
+    if (selectedInterpolation === 'linear') {
+      const resamplingFactor = (chartData.x.length - 1) / (numValues - 1);
+      resampledX = [];
+      resampledY = [];
+
+      for (let i = 0; i < numValues; i++) {
+        const index = Math.floor(i * resamplingFactor);
+        const remainder = i * resamplingFactor - index;
+
+        if (remainder === 0) {
+          resampledX.push(chartData.x[index]);
+          resampledY.push(chartData.y[index]);
+        } else {
+          const interpolatedX = chartData.x[index] + remainder * (chartData.x[index + 1] - chartData.x[index]);
+          const interpolatedY = chartData.y[index] + remainder * (chartData.y[index + 1] - chartData.y[index]);
+          resampledX.push(interpolatedX);
+          resampledY.push(interpolatedY);
+        }
+      }
+    } else if (selectedInterpolation === 'akima') {
+      const { x: interpolatedX, y: interpolatedY } = interpolateArray(
+        chartData.x,
+        chartData.y,
+        numValues,
+        'akima'
+      );
+      resampledX = interpolatedX;
+      resampledY = interpolatedY;
+    }
+
     const newChartData = {
       name: 'Interpolated/Resampled',
       x: resampledX,
       y: resampledY,
     };
-  
+
     setResampledChartData(newChartData);
   };
-  
-  
 
   const handleManualSliderChange = () => {
     const enteredValue = parseInt(manualSliderValue);
@@ -153,8 +174,6 @@ function App() {
   const handleSliderMouseLeave = (event) => {
     setHoveredValue(null);
   };
-
-
 
   const renderData = () => {
     if (selectedSource === 'excel') {
@@ -219,36 +238,34 @@ function App() {
       );
     }
   };
-  
-
 
   const handlePaste = (event) => {
     const clipboardData = event.clipboardData || window.clipboardData;
     const pastedData = clipboardData.getData('text');
-
+  
     const rows = pastedData.split('\n').filter((row) => row.trim() !== '');
-
+  
     const parsedData = rows.map((row) => {
       const columns = row.split('\t');
-
+  
       return {
-        X: columns[0] || '',
-        Y: columns[1] || '',
+        X: parseFloat(columns[0]) || 0,
+        Y: parseFloat(columns[1]) || 0,
       };
     });
-
+  
     const x = parsedData.map((item) => item.X);
     const y = parsedData.map((item) => item.Y);
-
+  
     setChartData({ name: 'excel', x, y });
-
+  
     event.preventDefault();
   };
 
   const renderGeneratedArray = () => {
     const array1 = resampledChartData.x;
     const array2 = resampledChartData.y;
-  
+
     return (
       <div>
         <ResampledTable array1={array1} array2={array2} sampleCount={sampleCount} />
@@ -256,40 +273,31 @@ function App() {
     );
   };
 
-  
   function interpolateArray(x, y, numValues, method) {
     let interpolatedX, interpolatedY;
-  
+
     if (method === 'linear') {
       interpolatedX = [];
       interpolatedY = [];
-  
-      for (let i = 0; i < x.length - 1; i++) {
-        interpolatedX.push(x[i]);
-        interpolatedY.push(y[i]);
-  
-        const xStep = (x[i + 1] - x[i]) / (numValues - 1);
-        const yStep = (y[i + 1] - y[i]) / (numValues - 1);
-  
-        for (let j = 1; j < numValues - 1; j++) {
-          const newX = x[i] + j * xStep;
-          const newY = y[i] + j * yStep;
-          interpolatedX.push(newX);
-          interpolatedY.push(newY);
-        }
+
+      for (let i = 0; i < numValues; i++) {
+        const fraction = i / (numValues - 1);
+        const index = Math.floor(fraction * (x.length - 1));
+        const dx = fraction * (x[x.length - 1] - x[0]);
+        const interpolatedXValue = x[0] + dx;
+        const interpolatedYValue = y[index] + (y[index + 1] - y[index]) * (dx - x[index]) / (x[index + 1] - x[index]);
+        interpolatedX.push(interpolatedXValue);
+        interpolatedY.push(interpolatedYValue);
       }
-  
-      interpolatedX.push(x[x.length - 1]);
-      interpolatedY.push(y[y.length - 1]);
     } else if (method === 'akima') {
       const interpolator = numeric.spline(x, y, 'akima');
-  
+
       interpolatedX = numeric.linspace(x[0], x[x.length - 1], numValues);
       interpolatedY = interpolatedX.map((value) => interpolator.at(value));
     } else {
       throw new Error(`Unsupported interpolation method: ${method}`);
     }
-  
+
     return { x: interpolatedX, y: interpolatedY };
   }
 
@@ -333,7 +341,7 @@ function App() {
           <Slider
             value={sliderValue}
             min={0}
-            max={8*chartData.x.length}
+            max={8 * chartData.x.length}
             onChange={handleSliderChange}
             aria-labelledby="continuous-slider"
             onMouseEnter={handleSliderMouseEnter}
@@ -350,6 +358,7 @@ function App() {
             />
             <button onClick={handleManualSliderChange}>Set Value</button>
           </div>
+          
         </div>
       </div>
       <div className="Data1">
@@ -400,13 +409,13 @@ function App() {
       <div className="Data2">
         <button
           className="FunctionalButton"
-          onClick={() => dataManagement.copyDataToTxt(chartData)}
+          onClick={() => dataManagement.copyDataToTxt(resampledChartData)}
         >
           Download resampled data in .txt
         </button>
         <button
           className="FunctionalButton"
-          onClick={() => dataManagement.copyDataToTxt(dataLinear)}
+          onClick={() => dataManagement.copyDataToTxt(chartData)}
         >
           Download original data in .txt
         </button>
