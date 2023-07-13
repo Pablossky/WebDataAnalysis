@@ -1,5 +1,5 @@
 import './App.css';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dropdown } from 'semantic-ui-react';
 import Chart from "./plotly/mychart.js";
 import "./functionality/dataManagement.js";
@@ -83,6 +83,13 @@ function App() {
     { key: '2', text: 'Akima', value: 'akima' },
   ];
 
+  const [interpolatedChartData, setInterpolatedChartData] = useState({
+    name: 'Interpolated',
+    x: [],
+    y: []
+  });
+  
+
   const handleFileUpload = (e) => {
     const reader = new FileReader();
     reader.readAsBinaryString(e.target.files[0]);
@@ -102,22 +109,30 @@ function App() {
 
   const handleInterpolationChange = (event, { value }) => {
     setSelectedInterpolation(value);
-
-    if (selectedSource === 'interpolated') {
-      const { x: interpolatedX, y: interpolatedY } = interpolateArray(
-        chartData.x,
-        chartData.y,
-        chartData.x.length,
-        value
-      );
-      const interpolatedChartData = {
-        name: 'Interpolated',
-        x: interpolatedX,
-        y: interpolatedY,
-      };
-      setChartData(interpolatedChartData);
-    }
+    handleInterpolation(); // Call the interpolation function
   };
+  
+  // Call the interpolation function when the lowpass filter or chart data change
+  useEffect(() => {
+    handleInterpolation();
+  }, [lowpassEnabled, chartData]);
+
+  const handleInterpolation = () => {
+    const { x, y } = filteredChartData;
+    const { x: interpolatedX, y: interpolatedY } = interpolateArray(
+      x,
+      y,
+      x.length,
+      selectedInterpolation
+    );
+    const interpolatedData = {
+      name: 'Interpolated',
+      x: interpolatedX,
+      y: interpolatedY,
+    };
+    setInterpolatedChartData(interpolatedData);
+  };
+  
 
   const handleSliderChange = (event, value) => {
     setSliderValue(value);
@@ -270,6 +285,7 @@ function App() {
   const filteredChartData = lowpassEnabled
   ? {
       ...chartData,
+      name: 'Lowpass filter',
       y: applyLowpassFilter(chartData.y, cutoffFrequency, sampleRate),
     }
   : chartData;
@@ -348,8 +364,8 @@ function App() {
   };
 
   const renderGeneratedArray = () => {
-    const array1 = resampledChartData.x.slice(offset, offset + sampleCount);
-    const array2 = resampledChartData.y.slice(offset, offset + sampleCount);
+    const array1 = resampledChartData.x.slice(offset, Math.min(offset + sampleCount));
+    const array2 = resampledChartData.y.slice(offset, Math.min(offset + sampleCount));
 
     return (
       <div>
@@ -362,12 +378,13 @@ function App() {
     <div className="App">
       <div className="ChartPlotter">
         <div>
-          <Chart data={[chartData, resampledChartData, offsettedChartData, filteredChartData]} />
+        <Chart data={[filteredChartData, resampledChartData, offsettedChartData, interpolatedChartData]} />
+
         </div>
       </div>
       <div className="Options">
         <div className="InputFile">
-          Wczytaj plik .xlsx
+          Read from .xlsx file
           <input
             className="InputButton"
             type="file"
@@ -376,7 +393,7 @@ function App() {
           />
         </div>
         <div className="Space"></div>
-        Źródło danych:
+        Data source:
         <div className="ui buttons">
           <button
             className={`ui button ${selectedSource === 'excel' ? 'active' : ''}`}
@@ -393,7 +410,7 @@ function App() {
         </div>
         <div className="Space"></div>
         
-        Metoda interpolacji:
+        Interpolation method:
         <Dropdown
           placeholder="Choose method"
           selection
@@ -411,7 +428,7 @@ function App() {
           />
         </div>
         <div className="slider-container">
-          <th>Liczba próbek</th>
+          <th>Sample count</th>
           <Slider
             value={sliderValue}
             min={0}
@@ -434,7 +451,7 @@ function App() {
         </div>
 
         <div className="offset-slider-container">
-          <th>Opóźnienie</th>
+          <th>Offset</th>
           <Slider
             value={offset}
             min={0}
@@ -455,7 +472,7 @@ function App() {
           </div>
 
           <div className="slider-container">
-            <th>Opóźnienie interpolacji</th>
+            <th>Interpolation offset</th>
             <Slider
               value={interpolationStartIndex}
               min={0}
@@ -481,7 +498,7 @@ function App() {
         </div>
       </div>
       <div className="Data1">
-        Wklej dane:
+        Paste data:
         <textarea
           className='InputData'
           defaultValue='Input data...'
