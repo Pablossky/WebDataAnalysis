@@ -22,25 +22,32 @@ function App() {
   const [selectedInterpolation, setSelectedInterpolation] = useState('linear');
   const [offset, setOffset] = useState(0);
   const [hoveredOffset, setHoveredOffset] = useState(0);
+  const [interpolationStartIndex, setInterpolationStartIndex] = useState(0);
+  
+
 
   const [chartData, setChartData] = useState({
-    name: 'linear',
+    name: 'default',
     x: [1, 2, 3, 4],
-    y: [3, 3, 3, 3]
+    y: [1, 2, 1, 2]
   });
 
   const [resampledChartData, setResampledChartData] = useState({
-    name: 'linear',
+    name: 'default',
     x: [1, 2, 3, 4],
-    y: [3, 3, 3, 3]
+    y: [1, 2, 1, 2]
   });
 
   const [offsettedChartData, setOffsettedChartData] = useState({
     name: 'offsetted',
     x: [],
     y: []
-    
   });
+
+  const handleInterpolationStartChange = (event, value) => {
+    setInterpolationStartIndex(value);
+  };
+  
 
   function interpolateArray(x, y, numValues, method) {
     let interpolatedX, interpolatedY;
@@ -70,12 +77,7 @@ function App() {
     return { x: interpolatedX, y: interpolatedY };
   }
 
-  const dataSource = [
-    { key: '1', text: 'Linear', value: 'linear' },
-    { key: '2', text: 'Curve', value: 'curve' },
-    { key: '3', text: 'Excel', value: 'excel' },
-    { key: '4', text: 'Interpolated', value: 'interpolated' },
-  ];
+  
 
   const interpolationMethod = [
     { key: '1', text: 'Linear', value: 'linear' },
@@ -97,35 +99,6 @@ function App() {
 
       setChartData({ name: 'Your Data', x, y });
     };
-  };
-
-  const handleDropdownChange = (event, { value }) => {
-    setSelectedSource(value);
-
-    if (value === 'excel') {
-      setChartData({
-        name: 'excel',
-        x: chartData.x,
-        y: chartData.y,
-      });
-    } else if (value === 'linear') {
-      setChartData({ name: 'linear', x: [1, 2, 3, 4], y: [3, 3, 3, 3] });
-    } else if (value === 'curve') {
-      setChartData({ name: 'curve', x: [1, 2, 3, 4], y: [2, 5, 6, 7] });
-    } else if (value === 'interpolated') {
-      const { x: interpolatedX, y: interpolatedY } = interpolateArray(
-        chartData.x,
-        chartData.y,
-        chartData.x.length,
-        selectedInterpolation
-      );
-      const interpolatedChartData = {
-        name: 'Interpolated',
-        x: interpolatedX,
-        y: interpolatedY,
-      };
-      setChartData(interpolatedChartData);
-    }
   };
 
   const handleInterpolationChange = (event, { value }) => {
@@ -243,6 +216,38 @@ function App() {
     setHoveredOffset(null);
   };
 
+  const handleDataSourceSwitch = (value) => {
+    setSelectedSource(value);
+  
+    if (value === 'excel') {
+      setChartData({
+        name: 'excel',
+        x: chartData.x,
+        y: chartData.y,
+      });
+    } else if (value === 'default') {
+      setChartData({ name: 'default', x: [1, 2, 3, 4], y: [3, 3, 3, 3] });
+    } else if (value === 'interpolated') {
+      const { x: interpolatedX, y: interpolatedY } = interpolateArray(
+        chartData.x,
+        chartData.y,
+        chartData.x.length,
+        selectedInterpolation
+      );
+  
+      const startIndex = Math.round(interpolationStartIndex * (interpolatedX.length - 1));
+      const endIndex = interpolatedX.length - 1;
+  
+      const interpolatedChartData = {
+        name: 'Interpolated',
+        x: interpolatedX.slice(startIndex, endIndex),
+        y: interpolatedY.slice(startIndex, endIndex),
+      };
+      setChartData(interpolatedChartData);
+    }
+  };
+  
+
   const handlePaste = (event) => {
     const clipboardData = event.clipboardData || window.clipboardData;
     const pastedData = clipboardData.getData('text');
@@ -290,7 +295,7 @@ function App() {
           )}
         </div>
       );
-    } else if (selectedSource === 'linear') {
+    } else if (selectedSource === 'default') {
       return (
         <div>
           {chartData.x.length > 0 && (
@@ -338,11 +343,11 @@ function App() {
       );
     }
   };
-  
+
   const renderGeneratedArray = () => {
     const array1 = resampledChartData.x.slice(offset, offset + sampleCount);
     const array2 = resampledChartData.y.slice(offset, offset + sampleCount);
-  
+
     return (
       <div>
         <ResampledTable array1={array1} array2={array2} sampleCount={sampleCount} />
@@ -354,30 +359,37 @@ function App() {
     <div className="App">
       <div className="ChartPlotter">
         <div>
-        <Chart data={[chartData, resampledChartData, offsettedChartData]} />
+          <Chart data={[chartData, resampledChartData, offsettedChartData]} />
         </div>
       </div>
       <div className="Options">
-        <div className="InputFile">
-          Wczytaj plik .xlsx
-          <input
-            className="InputButton"
-            type="file"
-            accept=".xlsx, .xls"
-            onChange={handleFileUpload}
-          />
-        </div>
-        <div className="Space"></div>
-        Źródło danych:
-        <Dropdown
-          placeholder="Choose method"
-          selection
-          options={dataSource}
-          value={selectedSource}
-          onChange={handleDropdownChange}
-        />
-        <div className="Space"></div>
-        Metoda interpolacji:
+  <div className="InputFile">
+    Wczytaj plik .xlsx
+    <input
+      className="InputButton"
+      type="file"
+      accept=".xlsx, .xls"
+      onChange={handleFileUpload}
+    />
+  </div>
+  <div className="Space"></div>
+  Źródło danych:
+  <div className="ui buttons">
+    <button
+      className={`ui button ${selectedSource === 'excel' ? 'active' : ''}`}
+      onClick={() => handleDataSourceSwitch('excel')}
+    >
+      Original
+    </button>
+    <button
+      className={`ui button ${selectedSource === 'interpolated' ? 'active' : ''}`}
+      onClick={() => handleDataSourceSwitch('interpolated')}
+    >
+      Interpolated
+    </button>
+  </div>
+  <div className="Space"></div>
+  Metoda interpolacji:
         <Dropdown
           placeholder="Choose method"
           selection
@@ -387,49 +399,69 @@ function App() {
         />
         <div className="Space"></div>
         <div className="slider-container">
-  <Slider
-    value={sliderValue}
+        <th>Liczba próbek</th>
+          <Slider
+            value={sliderValue}
+            min={0}
+            max={8 * chartData.x.length}
+            onChange={handleSliderChange}
+            aria-labelledby="continuous-slider"
+            onMouseEnter={handleSliderMouseEnter}
+            onMouseLeave={handleSliderMouseLeave}
+          />
+          {hoveredValue !== null && (
+            <div className="hovered-value">{hoveredValue}</div>
+          )}
+          <div className="manual-input">
+            <input
+              type="number"
+              value={manualSliderValue}
+              onChange={handleManualSliderChange}
+              onBlur={handleManualSliderChange}
+            />
+          </div>
+        </div>
+
+        <div className="offset-slider-container">
+        <th>Opóźnienie</th>
+          <Slider
+            value={offset}
+            min={0}
+            max={(sliderValue / 2) - 1}
+            onChange={handleOffsetSliderChange}
+            aria-labelledby="continuous-slider"
+            onMouseEnter={handleOffsetSliderMouseEnter}
+            onMouseLeave={handleOffsetSliderMouseLeave}
+          />
+          {hoveredOffset !== null && (
+            <div className="hovered-offset">{hoveredOffset}</div>
+          )}
+          <div className="manual-input">
+            <input
+              type="number"
+              value={offset}
+              onChange={handleOffsetManualSliderChange}
+              onBlur={handleOffsetManualSliderChange}
+            />
+          </div>
+
+          <div className="slider-container">
+        <th>Opóźnienie interpolacji</th>
+        <Slider
+    value={interpolationStartIndex}
     min={0}
-    max={8 * chartData.x.length}
-    onChange={handleSliderChange}
+    max={sampleCount}
+    step={0.01}
+    onChange={handleInterpolationStartChange}
     aria-labelledby="continuous-slider"
     onMouseEnter={handleSliderMouseEnter}
     onMouseLeave={handleSliderMouseLeave}
   />
-  {hoveredValue !== null && (
-    <div className="hovered-value">{hoveredValue}</div>
+  {interpolationStartIndex !== null && (
+    <div className="hovered-value">{interpolationStartIndex.toFixed(2)}</div>
   )}
-  <div className="manual-input">
-    <input
-      type="number"
-      value={manualSliderValue}
-      onChange={handleManualSliderChange}
-      onBlur={handleManualSliderChange}
-    />
-  </div>
 </div>
 
-<div className="offset-slider-container">
-  <Slider
-    value={offset}
-    min={0}
-    max={(sliderValue/2) - 1}
-    onChange={handleOffsetSliderChange}
-    aria-labelledby="continuous-slider"
-    onMouseEnter={handleOffsetSliderMouseEnter}
-    onMouseLeave={handleOffsetSliderMouseLeave}
-  />
-  {hoveredOffset !== null && (
-    <div className="hovered-offset">{hoveredOffset}</div>
-  )}
-  <div className="manual-input">
-    <input
-      type="number"
-      value={offset}
-      onChange={handleOffsetManualSliderChange}
-      onBlur={handleOffsetManualSliderChange}
-    />
-  </div>
 
         </div>
       </div>
@@ -448,8 +480,8 @@ function App() {
             <div
               className="Box"
               style={{
-                width: '200px',
-                height: '250px',
+                width: '250px',
+                height: '500px',
                 overflow: 'auto',
                 border: '1px solid #ccc',
                 borderRadius: '4px',
@@ -463,8 +495,8 @@ function App() {
             <div
               className="Box"
               style={{
-                width: '200px',
-                height: '250px',
+                width: '250px',
+                height: '500px',
                 overflow: 'auto',
                 border: '1px solid #ccc',
                 borderRadius: '4px',
