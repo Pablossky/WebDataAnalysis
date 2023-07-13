@@ -29,6 +29,4 @@ function ResampledTable({ array1, array2, sampleCount }) {
     );
   }
 
-  
-
 export default ResampledTable;

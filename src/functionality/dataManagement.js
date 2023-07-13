@@ -1,4 +1,3 @@
-
 function clearingDataText(dataToClear) {
     const text = JSON.stringify(dataToClear);
     let readyText = text.replaceAll(/["{XYxy:]/g, "")
@@ -25,5 +24,4 @@ const copyDataToTxt = (chartData) => {
   window.URL.revokeObjectURL(tempUrl);
 };
     
-
 module.exports = { clearingDataText, copyDataToTxt };

@@ -86,7 +86,6 @@ function App() {
     y: []
   });
   
-
   const handleFileUpload = (e) => {
     const reader = new FileReader();
     reader.readAsBinaryString(e.target.files[0]);
@@ -113,13 +112,14 @@ function App() {
     handleInterpolation();
   }, [lowpassEnabled, chartData]);
 
-  const handleCutoffFrequency = (event, { value }) => {
-    setCutoffFrequency(value);
-  }
+ 
+const handleCutoffFrequency = (event, value) => {
+  setCutoffFrequency(value);
+}
 
-  const handleSampleRate = (event, { value }) => {
-    setSampleRate(value);
-  }
+const handleSampleRate = (event, value) => {
+  setSampleRate(value);
+}
 
   const handleInterpolation = () => {
     const { x, y } = filteredChartData;
