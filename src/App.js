@@ -47,7 +47,6 @@ function App() {
     setInterpolationStartIndex(value);
   };
 
-
   function interpolateArray(x, y, numValues, method) {
     let interpolatedX, interpolatedY;
 
@@ -75,8 +74,6 @@ function App() {
 
     return { x: interpolatedX, y: interpolatedY };
   }
-
-
 
   const interpolationMethod = [
     { key: '1', text: 'Linear', value: 'linear' },
@@ -109,13 +106,20 @@ function App() {
 
   const handleInterpolationChange = (event, { value }) => {
     setSelectedInterpolation(value);
-    handleInterpolation(); // Call the interpolation function
+    handleInterpolation();
   };
   
-  // Call the interpolation function when the lowpass filter or chart data change
-  useEffect(() => {
+    useEffect(() => {
     handleInterpolation();
   }, [lowpassEnabled, chartData]);
+
+  const handleCutoffFrequency = (event, { value }) => {
+    setCutoffFrequency(value);
+  }
+
+  const handleSampleRate = (event, { value }) => {
+    setSampleRate(value);
+  }
 
   const handleInterpolation = () => {
     const { x, y } = filteredChartData;
@@ -216,6 +220,12 @@ function App() {
   };
 
   const handleSliderMouseEnter = (event) => {
+  };
+
+  const handleCutoffFrequencySliderMouseEnter = (event) => {
+  };
+
+  const handleCutoffFrequencySliderMouseLeave = (event) => {
   };
 
   const handleOffsetSliderMouseEnter = (event) => {
@@ -427,6 +437,51 @@ function App() {
             onChange={handleLowpassToggle}
           />
         </div>
+
+        <div className="offset-slider-container">
+          <th>Cutoff Frequency</th>
+          <Slider
+            value={cutoffFrequency}
+            min={0}
+            max={2000}
+            onChange={handleCutoffFrequency}
+            aria-labelledby="continuous-slider"
+            onMouseEnter={handleCutoffFrequencySliderMouseEnter}
+            onMouseLeave={handleCutoffFrequencySliderMouseLeave}
+          />
+          
+          <div className="manual-input">
+            <input
+              type="number"
+              value={cutoffFrequency}
+              onChange={handleOffsetManualSliderChange}
+              onBlur={handleOffsetManualSliderChange}
+            />
+          </div>
+          </div>
+
+          <div className="offset-slider-container">
+          <th>Sample Rate</th>
+          <Slider
+            value={sampleRate}
+            min={0}
+            max={2000}
+            onChange={handleSampleRate}
+            aria-labelledby="continuous-slider"
+            onMouseEnter={handleOffsetSliderMouseEnter}
+            onMouseLeave={handleOffsetSliderMouseLeave}
+          />
+          
+          <div className="manual-input">
+            <input
+              type="number"
+              value={sampleRate}
+              onChange={handleOffsetManualSliderChange}
+              onBlur={handleOffsetManualSliderChange}
+            />
+          </div>
+          </div>
+
         <div className="slider-container">
           <th>Sample count</th>
           <Slider
@@ -470,7 +525,6 @@ function App() {
               onBlur={handleOffsetManualSliderChange}
             />
           </div>
-
           <div className="slider-container">
             <th>Interpolation offset</th>
             <Slider
@@ -483,7 +537,6 @@ function App() {
               onMouseEnter={handleSliderMouseEnter}
               onMouseLeave={handleSliderMouseLeave}
             />
-            
             <div className="manual-input">
             <input
               type="number"
@@ -493,8 +546,6 @@ function App() {
             />
           </div>
           </div>
-          
-
         </div>
       </div>
       <div className="Data1">
@@ -518,7 +569,7 @@ function App() {
                 border: '1px solid #ccc',
                 borderRadius: '4px',
                 padding: '10px',
-                marginLeft: '10px', // Adjust the margin as needed
+                marginLeft: '10px', 
               }}
             >
               <h1>Resampled</h1>
@@ -533,7 +584,7 @@ function App() {
                 border: '1px solid #ccc',
                 borderRadius: '4px',
                 padding: '10px',
-                marginLeft: '10px', // Adjust the margin as needed
+                marginLeft: '10px', 
               }}
             >
               <h1>Original</h1>
