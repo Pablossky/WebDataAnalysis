@@ -6,37 +6,36 @@ import "./functionality/dataManagement.js";
 import "./functionality/plottingData.js";
 import 'semantic-ui-css/semantic.min.css';
 import 'toolcool-range-slider';
-import Slider from '@mui/material/Slider';
 import ResampledTable from './functionality/plottingData.js';
 import applyLowpassFilter from './functionality/lowpassFilter.js';
+import SliderInput from './components/SliderInput';
+import DataBox from './components/DataBox';
+import LowpassFilter from './components/LowpassFilter';
 
 const dataManagement = require("./functionality/dataManagement");
 const numeric = require('numeric');
 
 function App() {
   const XLSX = require('xlsx');
-  const [sliderValue, setSliderValue] = useState(1000);
+  const [sliderValue, setSliderValue] = useState(2);
   const [sampleCount, setSampleCount] = useState(5);
   const [selectedSource, setSelectedSource] = useState('excel');
   const [selectedInterpolation, setSelectedInterpolation] = useState('linear');
   const [offset, setOffset] = useState(0);
   const [interpolationStartIndex, setInterpolationStartIndex] = useState(0);
-  const [lowpassEnabled, setLowpassEnabled] = useState(false);
-  const [cutoffFrequency, setCutoffFrequency] = useState(1000); 
+  const [lowpassFilterEnabled, setLowpassEnabled] = useState(false);
+  const [cutoffFrequency, setCutoffFrequency] = useState(1000);
   const [sampleRate, setSampleRate] = useState(1000);
-
   const [chartData, setChartData] = useState({
     name: 'default',
     x: [1, 2, 3, 4],
     y: [1, 2, 1, 2]
   });
-
   const [resampledChartData, setResampledChartData] = useState({
     name: 'default',
     x: [1, 2, 3, 4],
     y: [1, 2, 1, 2]
   });
-
   const [offsettedChartData, setOffsettedChartData] = useState({
     name: 'offsetted',
     x: [],
@@ -68,8 +67,6 @@ function App() {
 
       interpolatedX = numeric.linspace(x[0], x[x.length - 1], numValues);
       interpolatedY = interpolatedX.map((value) => interpolator.at(value));
-    } else {
-      throw new Error(`Unsupported interpolation method: ${method}`);
     }
 
     return { x: interpolatedX, y: interpolatedY };
@@ -85,7 +82,7 @@ function App() {
     x: [],
     y: []
   });
-  
+
   const handleFileUpload = (e) => {
     const reader = new FileReader();
     reader.readAsBinaryString(e.target.files[0]);
@@ -107,19 +104,18 @@ function App() {
     setSelectedInterpolation(value);
     handleInterpolation();
   };
-  
-    useEffect(() => {
+
+  useEffect(() => {
     handleInterpolation();
-  }, [lowpassEnabled, chartData]);
+  }, [lowpassFilterEnabled, chartData]);
 
- 
-const handleCutoffFrequency = (event, value) => {
-  setCutoffFrequency(value);
-}
+  const handleCutoffFrequency = (event, value) => {
+    setCutoffFrequency(value);
+  };
 
-const handleSampleRate = (event, value) => {
-  setSampleRate(value);
-}
+  const handleSampleRate = (event, value) => {
+    setSampleRate(value);
+  };
 
   const handleInterpolation = () => {
     const { x, y } = filteredChartData;
@@ -136,7 +132,6 @@ const handleSampleRate = (event, value) => {
     };
     setInterpolatedChartData(interpolatedData);
   };
-  
 
   const handleSliderChange = (event, value) => {
     setSliderValue(value);
@@ -201,7 +196,7 @@ const handleSampleRate = (event, value) => {
   };
 
   const handleLowpassToggle = () => {
-    setLowpassEnabled(!lowpassEnabled);
+    setLowpassEnabled(!lowpassFilterEnabled);
   };
 
   const handleManualSliderChange = (e) => {
@@ -219,24 +214,6 @@ const handleSampleRate = (event, value) => {
     }
   };
 
-  const handleSliderMouseEnter = (event) => {
-  };
-
-  const handleCutoffFrequencySliderMouseEnter = (event) => {
-  };
-
-  const handleCutoffFrequencySliderMouseLeave = (event) => {
-  };
-
-  const handleOffsetSliderMouseEnter = (event) => {
-  };
-
-  const handleSliderMouseLeave = (event) => {
-  };
-
-  const handleOffsetSliderMouseLeave = (event) => {
-  };
-
   const handleDataSourceSwitch = (value) => {
     setSelectedSource(value);
 
@@ -247,7 +224,7 @@ const handleSampleRate = (event, value) => {
         y: chartData.y,
       });
     } else if (value === 'default') {
-      setChartData({ name: 'default', x: [1, 2, 3, 4], y: [3, 3, 3, 3] });
+      setChartData({ name: 'default', x: [1, 2, 3, 4], y: [1, 2, 1, 2] });
     } else if (value === 'interpolated') {
       const { x: interpolatedX, y: interpolatedY } = interpolateArray(
         chartData.x,
@@ -256,18 +233,17 @@ const handleSampleRate = (event, value) => {
         selectedInterpolation
       );
 
-      const startIndex = Math.round(interpolationStartIndex * (interpolatedX.length - 1));
-      const endIndex = interpolatedX.length - 1;
+      const interpolationStart = Math.round(interpolationStartIndex * (interpolatedX.length - 1));
+      const interpolationEnd = interpolatedX.length - 1;
 
       const interpolatedChartData = {
         name: 'Interpolated',
-        x: interpolatedX.slice(startIndex, endIndex),
-        y: interpolatedY.slice(startIndex, endIndex),
+        x: interpolatedX.slice(interpolationStart, interpolationEnd),
+        y: interpolatedY.slice(interpolationStart, interpolationEnd),
       };
       setChartData(interpolatedChartData);
     }
   };
-
 
   const handlePaste = (event) => {
     const clipboardData = event.clipboardData || window.clipboardData;
@@ -292,13 +268,13 @@ const handleSampleRate = (event, value) => {
     event.preventDefault();
   };
 
-  const filteredChartData = lowpassEnabled
-  ? {
+  const filteredChartData = lowpassFilterEnabled
+    ? {
       ...chartData,
       name: 'Lowpass filter',
       y: applyLowpassFilter(chartData.y, cutoffFrequency, sampleRate),
     }
-  : chartData;
+    : chartData;
 
   const renderData = () => {
     if (selectedSource === 'excel') {
@@ -388,8 +364,7 @@ const handleSampleRate = (event, value) => {
     <div className="App">
       <div className="ChartPlotter">
         <div>
-        <Chart data={[filteredChartData, resampledChartData, offsettedChartData, interpolatedChartData]} />
-
+          <Chart data={[filteredChartData, resampledChartData, offsettedChartData, interpolatedChartData]} />
         </div>
       </div>
       <div className="Options">
@@ -419,7 +394,7 @@ const handleSampleRate = (event, value) => {
           </button>
         </div>
         <div className="Space"></div>
-        
+
         Interpolation method:
         <Dropdown
           placeholder="Choose method"
@@ -429,123 +404,44 @@ const handleSampleRate = (event, value) => {
           onChange={handleInterpolationChange}
         />
         <div className="Space"></div>
-        <div className="LowpassToggle">
-          <label>Lowpass Filter:</label>
-          <input
-            type="checkbox"
-            checked={lowpassEnabled}
-            onChange={handleLowpassToggle}
-          />
-        </div>
-
-        <div className="offset-slider-container">
-          <th>Cutoff Frequency</th>
-          <Slider
-            value={cutoffFrequency}
-            min={0}
-            max={2000}
-            onChange={handleCutoffFrequency}
-            aria-labelledby="continuous-slider"
-            onMouseEnter={handleCutoffFrequencySliderMouseEnter}
-            onMouseLeave={handleCutoffFrequencySliderMouseLeave}
-          />
-          
-          <div className="manual-input">
-            <input
-              type="number"
-              value={cutoffFrequency}
-              onChange={handleOffsetManualSliderChange}
-              onBlur={handleOffsetManualSliderChange}
-            />
-          </div>
-          </div>
-
-          <div className="offset-slider-container">
-          <th>Sample Rate</th>
-          <Slider
-            value={sampleRate}
-            min={0}
-            max={2000}
-            onChange={handleSampleRate}
-            aria-labelledby="continuous-slider"
-            onMouseEnter={handleOffsetSliderMouseEnter}
-            onMouseLeave={handleOffsetSliderMouseLeave}
-          />
-          
-          <div className="manual-input">
-            <input
-              type="number"
-              value={sampleRate}
-              onChange={handleOffsetManualSliderChange}
-              onBlur={handleOffsetManualSliderChange}
-            />
-          </div>
-          </div>
+        <LowpassFilter
+          lowpassFilterEnabled={lowpassFilterEnabled}
+          handleLowpassToggle={handleLowpassToggle}
+          cutoffFrequency={cutoffFrequency}
+          handleCutoffFrequency={handleCutoffFrequency}
+          sampleRate={sampleRate}
+          handleSampleRate={handleSampleRate}
+        />
 
         <div className="slider-container">
-          <th>Sample count</th>
-          <Slider
+          <SliderInput
             value={sliderValue}
             min={0}
             max={8 * chartData.x.length}
             onChange={handleSliderChange}
-            aria-labelledby="continuous-slider"
-            onMouseEnter={handleSliderMouseEnter}
-            onMouseLeave={handleSliderMouseLeave}
+            name={'Sample Count'}
           />
-          
-          <div className="manual-input">
-            <input
-              type="number"
-              value={sliderValue}
-              onChange={handleManualSliderChange}
-              onBlur={handleManualSliderChange}
-            />
-            
-          </div>
         </div>
 
         <div className="offset-slider-container">
-          <th>Offset</th>
-          <Slider
+          <SliderInput
             value={offset}
             min={0}
             max={(sliderValue / 2) - 1}
             onChange={handleOffsetSliderChange}
-            aria-labelledby="continuous-slider"
-            onMouseEnter={handleOffsetSliderMouseEnter}
-            onMouseLeave={handleOffsetSliderMouseLeave}
+            name={'Offset'}
           />
-          
-          <div className="manual-input">
-            <input
-              type="number"
-              value={offset}
-              onChange={handleOffsetManualSliderChange}
-              onBlur={handleOffsetManualSliderChange}
-            />
-          </div>
-          <div className="slider-container">
-            <th>Interpolation offset</th>
-            <Slider
-              value={interpolationStartIndex}
-              min={0}
-              max={sampleCount}
-              step={0.01}
-              onChange={handleInterpolationStartChange}
-              aria-labelledby="continuous-slider"
-              onMouseEnter={handleSliderMouseEnter}
-              onMouseLeave={handleSliderMouseLeave}
-            />
-            <div className="manual-input">
-            <input
-              type="number"
-              value={interpolationStartIndex}
-              onChange={handleOffsetManualSliderChange}
-              onBlur={handleOffsetManualSliderChange}
-            />
-          </div>
-          </div>
+        </div>
+
+        <div className="slider-container">
+          <SliderInput
+            value={interpolationStartIndex}
+            min={0}
+            max={sampleCount}
+            step={0.01}
+            onChange={handleInterpolationStartChange}
+            name={'Interpolation offset'}
+          />
         </div>
       </div>
       <div className="Data1">
@@ -560,36 +456,14 @@ const handleSampleRate = (event, value) => {
         </div>
         <div className="DataList">
           <div className="Container">
-            <div
-              className="Box"
-              style={{
-                width: '250px',
-                height: '500px',
-                overflow: 'auto',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                padding: '10px',
-                marginLeft: '10px', 
-              }}
-            >
-              <h1>Resampled</h1>
-              {renderGeneratedArray()}
-            </div>
-            <div
-              className="Box"
-              style={{
-                width: '250px',
-                height: '500px',
-                overflow: 'auto',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                padding: '10px',
-                marginLeft: '10px', 
-              }}
-            >
-              <h1>Original</h1>
-              <div>{renderData(selectedSource)}</div>
-            </div>
+            <DataBox
+              value={renderGeneratedArray()}
+              name={'Resampled'}
+            />
+            <DataBox
+              value={renderData(selectedSource)}
+              name={'Original'}
+            />
           </div>
         </div>
       </div>
