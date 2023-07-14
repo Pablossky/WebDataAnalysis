@@ -19,7 +19,7 @@ function App() {
   const XLSX = require('xlsx');
   const [sliderValue, setSliderValue] = useState(2);
   const [sampleCount, setSampleCount] = useState(5);
-  const [selectedSource, setSelectedSource] = useState('excel');
+  const [selectedSource, setSelectedSource] = useState('dataFile');
   const [selectedInterpolation, setSelectedInterpolation] = useState('linear');
   const [offset, setOffset] = useState(0);
   const [interpolationStartIndex, setInterpolationStartIndex] = useState(0);
@@ -199,27 +199,12 @@ function App() {
     setLowpassEnabled(!lowpassFilterEnabled);
   };
 
-  const handleManualSliderChange = (e) => {
-    const enteredValue = parseInt(e.target.value);
-    if (!isNaN(enteredValue)) {
-      setSliderValue(enteredValue);
-      setSampleCount(enteredValue);
-    }
-  };
-
-  const handleOffsetManualSliderChange = (e) => {
-    const enteredValue = parseInt(e.target.value);
-    if (!isNaN(enteredValue)) {
-      setOffset(enteredValue);
-    }
-  };
-
   const handleDataSourceSwitch = (value) => {
     setSelectedSource(value);
 
-    if (value === 'excel') {
+    if (value === 'dataFile') {
       setChartData({
-        name: 'excel',
+        name: 'dataFile',
         x: chartData.x,
         y: chartData.y,
       });
@@ -263,7 +248,7 @@ function App() {
     const x = parsedData.map((item) => item.X);
     const y = parsedData.map((item) => item.Y);
 
-    setChartData({ name: 'excel', x, y });
+    setChartData({ name: 'dataFile', x, y });
 
     event.preventDefault();
   };
@@ -277,7 +262,7 @@ function App() {
     : chartData;
 
   const renderData = () => {
-    if (selectedSource === 'excel') {
+    if (selectedSource === 'dataFile') {
       return (
         <div>
           {chartData.x.length > 0 && (
@@ -381,8 +366,8 @@ function App() {
         Data source:
         <div className="ui buttons">
           <button
-            className={`ui button ${selectedSource === 'excel' ? 'active' : ''}`}
-            onClick={() => handleDataSourceSwitch('excel')}
+            className={`ui button ${selectedSource === 'dataFile' ? 'active' : ''}`}
+            onClick={() => handleDataSourceSwitch('dataFile')}
           >
             Original
           </button>
@@ -465,9 +450,11 @@ function App() {
               name={'Original'}
             />
           </div>
+          
         </div>
       </div>
       <div className="Data2">
+      <div className="Space"></div>
         <button
           className="FunctionalButton"
           onClick={() => dataManagement.copyDataToTxt(resampledChartData)}
@@ -480,13 +467,22 @@ function App() {
         >
           Download original data in .txt
         </button>
+        <div className="Space"></div>
+        <button
+          className="FunctionalButton"
+          onClick={() =>
+            navigator.clipboard.writeText(dataManagement.clearingDataText(resampledChartData))
+          }
+        >
+          Copy resampled data to clipboard
+        </button>
         <button
           className="FunctionalButton"
           onClick={() =>
             navigator.clipboard.writeText(dataManagement.clearingDataText(chartData))
           }
         >
-          Copy data to clipboard
+          Copy original data to clipboard
         </button>
       </div>
     </div>

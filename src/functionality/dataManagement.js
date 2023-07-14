@@ -3,7 +3,7 @@ function clearingDataText(dataToClear) {
     let readyText = text.replaceAll(/["{XYxy:]/g, "")
       .replaceAll(/[,[}]/g, " ")
       .replaceAll("]", " ")
-      .replaceAll(/[nameeirvuxcel]/g, "");
+      .replaceAll(/[nameeirvotTdDuxcel]/g, "");
 
     return readyText;
 }
