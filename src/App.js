@@ -498,6 +498,16 @@ function App() {
               value={renderFilteredData()}
               name={'Filtered'}
             />
+            <div className="info-button2">
+        <Popup
+          content="ORIGINAL presents imported or pasted data. FILTERED shows original data after applying lowpass filter (only if this option is turned on). RESAMPLED returns filtered data after applying all modifications."
+          trigger={
+            <div className="ui icon button">
+              <i className="info icon"></i>
+            </div>
+          }
+        />
+      </div>
           </div>
         </div>
       </div>

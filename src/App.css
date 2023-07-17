@@ -80,7 +80,7 @@
 }
 
 .DataList {
-  margin-left: 25%;
+  margin-left: 15%;
 }
 
 .FunctionalButton {
@@ -118,4 +118,8 @@
 
 .info-button {
   margin-left: 60%;
+}
+
+.info-button2 {
+  margin-left: 5%;
 }

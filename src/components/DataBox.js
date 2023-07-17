@@ -7,13 +7,14 @@ const DataBox = ({ value, name }) => {
     <div
       className="Box"
       style={{
-        width: '250px',
+        width: '350px',
         height: '500px',
         overflow: 'auto',
         border: '1px solid #ccc',
         borderRadius: '4px',
         padding: '10px',
         marginLeft: '10px',
+        textAlign: 'center'
       }}
     >
       <h1>{name}</h1>
