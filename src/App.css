@@ -115,3 +115,7 @@
 .toolcool-range-slider:host {
   width: 380px;
 }
+
+.info-button {
+  margin-left: 60%;
+}

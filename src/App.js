@@ -1,6 +1,6 @@
 import './App.css';
 import React, { useState, useEffect } from 'react';
-import { Dropdown } from 'semantic-ui-react';
+import { Dropdown, Popup } from 'semantic-ui-react';
 import Chart from "./components/mychart.js";
 import "./functionality/dataManagement.js";
 import "./functionality/plottingData.js";
@@ -379,6 +379,18 @@ function App() {
         </div>
       </div>
       <div className="Options">
+      <div className="info-button">
+        <Popup
+          content="Choose data from your computer saved in .xlsx file.
+          Data source decide which operation will be done earlier.
+          Dropdown menu contains interpolation methods."
+          trigger={
+            <div className="ui icon button">
+              <i className="info icon"></i>
+            </div>
+          }
+        />
+      </div>
         <div className="InputFile">
           Read from .xlsx file
           <input
@@ -387,6 +399,7 @@ function App() {
             accept=".xlsx, .xls"
             onChange={handleFileUpload}
           />
+          
         </div>
         <div className="Space"></div>
         Data source:
@@ -425,6 +438,16 @@ function App() {
         />
 
         <div className="Space"></div>
+        <div className="info-button">
+        <Popup
+          content="Sample Count changes number of points presented on the Chart. Offset give us oppoortunity to start from non-first sample when generating chart and interpolation offset allow us to pick moment when interpolations starts."
+          trigger={
+            <div className="ui icon button">
+              <i className="info icon"></i>
+            </div>
+          }
+        />
+      </div>
         <div className="slider-container">
           <SliderInput
             value={sliderValue}
@@ -484,7 +507,9 @@ function App() {
           
         </div>
       </div>
+      
       <DownloadingData
+      
         data1={resampledChartData}
         data2={chartData}
         data3={filteredChartData}
