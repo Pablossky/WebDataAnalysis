@@ -80,7 +80,7 @@
 }
 
 .DataList {
-  margin-left: 55%;
+  margin-left: 25%;
 }
 
 .FunctionalButton {
@@ -99,12 +99,12 @@
 
 .Box {
   width: 400px;
-  height: 250px;
+  height: 300px;
   overflow: auto;
   border: 1px solid #ccc;
   border-radius: 4px;
   padding: 10px;
-  margin-left: 10px; /* Adjust the margin as needed */
+  margin-left: 10px;
 }
 
 .Title1 {

@@ -1,6 +1,6 @@
 import './App.css';
 import React, { useState, useEffect } from 'react';
-import { Dropdown, Popup } from 'semantic-ui-react';
+import { Dropdown, Popup, Input } from 'semantic-ui-react';
 import Chart from "./components/mychart.js";
 import "./functionality/dataManagement.js";
 import "./functionality/plottingData.js";
@@ -139,7 +139,7 @@ function App() {
     let resampledX, resampledY;
 
     if (selectedInterpolation === 'linear') {
-      const resamplingFactor = (chartData.x.length - 1) / (numValues - 1);
+      const resamplingFactor = (filteredChartData.x.length - 1) / (numValues - 1);
       resampledX = [];
       resampledY = [];
 
@@ -148,19 +148,19 @@ function App() {
         const remainder = i * resamplingFactor - index;
 
         if (remainder === 0) {
-          resampledX.push(chartData.x[index]);
-          resampledY.push(chartData.y[index]);
+          resampledX.push(filteredChartData.x[index]);
+          resampledY.push(filteredChartData.y[index]);
         } else {
-          const interpolatedX = chartData.x[index] + remainder * (chartData.x[index + 1] - chartData.x[index]);
-          const interpolatedY = chartData.y[index] + remainder * (chartData.y[index + 1] - chartData.y[index]);
+          const interpolatedX = filteredChartData.x[index] + remainder * (filteredChartData.x[index + 1] - filteredChartData.x[index]);
+          const interpolatedY = filteredChartData.y[index] + remainder * (filteredChartData.y[index + 1] - filteredChartData.y[index]);
           resampledX.push(interpolatedX);
           resampledY.push(interpolatedY);
         }
       }
     } else if (selectedInterpolation === 'akima') {
       const { x: interpolatedX, y: interpolatedY } = interpolateArray(
-        chartData.x,
-        chartData.y,
+        filteredChartData.x,
+        filteredChartData.y,
         numValues,
         'akima'
       );
@@ -169,7 +169,7 @@ function App() {
     }
 
     const newChartData = {
-      name: 'Interpolated/Resampled',
+      name: 'Resampling',
       x: resampledX,
       y: resampledY,
     };
@@ -382,8 +382,8 @@ function App() {
       <div className="info-button">
         <Popup
           content="Choose data from your computer saved in .xlsx file.
-          Data source decide which operation will be done earlier.
-          Dropdown menu contains interpolation methods."
+          DATA SOURCE decide which operation will be done earlier.
+          Dropdown menu contains INTERPOLATION METHODS."
           trigger={
             <div className="ui icon button">
               <i className="info icon"></i>
@@ -392,9 +392,8 @@ function App() {
         />
       </div>
         <div className="InputFile">
-          Read from .xlsx file
-          <input
-            className="InputButton"
+          Import .xlsx file
+          <Input
             type="file"
             accept=".xlsx, .xls"
             onChange={handleFileUpload}
@@ -440,7 +439,7 @@ function App() {
         <div className="Space"></div>
         <div className="info-button">
         <Popup
-          content="Sample Count changes number of points presented on the Chart. Offset give us oppoortunity to start from non-first sample when generating chart and interpolation offset allow us to pick moment when interpolations starts."
+          content="SAMPLE COUNT changes number of points presented on the Chart. OFFSET give us opportunity to start from non-first sample when generating chart and INTERPOLATION OFFSET allow us to pick moment when interpolations starts."
           trigger={
             <div className="ui icon button">
               <i className="info icon"></i>
@@ -480,15 +479,11 @@ function App() {
         </div>
       </div>
       <div className="Data1">
-        Paste data:
-        <textarea
-          className='InputData'
-          defaultValue='Input data...'
-          onPaste={handlePaste}
-        ></textarea>
-        <div className="Title1">
-          Data: (X, Y)
-        </div>
+        <Input
+          className="InputData"
+          defaultValue="Input data..."
+          onChange={handlePaste}
+        />
         <div className="DataList">
           <div className="Container">
             <DataBox
@@ -504,12 +499,10 @@ function App() {
               name={'Filtered'}
             />
           </div>
-          
         </div>
       </div>
       
       <DownloadingData
-      
         data1={resampledChartData}
         data2={chartData}
         data3={filteredChartData}

@@ -9,7 +9,7 @@ export default function LowpassFilter({ lowpassFilterEnabled, handleLowpassToggl
       <>
         <div className="info-button">
         <Popup
-          content="You can check this box to apply lowpass filter to your data. Filtered data is printed in box with title Filtered. You can also adjust tune of filter by manipulating sliders: Cutoff Frequency and Sample Rate."
+          content="You can check this box to apply LOWPASS FILTER to your data. Filtered data is printed in box with title Filtered. You can also adjust tune of filter by manipulating sliders: CUTOFF FREQUENCY and SAMPLE RATE."
           trigger={
             <div className="ui icon button">
               <i className="info icon"></i>
