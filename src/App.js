@@ -1,7 +1,7 @@
 import './App.css';
 import React, { useState, useEffect } from 'react';
 import { Dropdown } from 'semantic-ui-react';
-import Chart from "./plotly/mychart.js";
+import Chart from "./components/mychart.js";
 import "./functionality/dataManagement.js";
 import "./functionality/plottingData.js";
 import 'semantic-ui-css/semantic.min.css';
@@ -11,6 +11,7 @@ import applyLowpassFilter from './functionality/lowpassFilter.js';
 import SliderInput from './components/SliderInput';
 import DataBox from './components/DataBox';
 import LowpassFilter from './components/LowpassFilter';
+import DownloadingData from './components/DownloadingData';
 
 const dataManagement = require("./functionality/dataManagement");
 const numeric = require('numeric');
@@ -41,6 +42,19 @@ function App() {
     x: [],
     y: []
   });
+  const [originalChartData, setOriginalChartData] = useState({
+    name: 'Your Data',
+    y: [] // Initialize with the original Y values
+  });
+  
+  // Initialize originalChartData in useEffect or elsewhere
+  useEffect(() => {
+    setOriginalChartData({
+      ...originalChartData,
+      y: chartData.y
+    });
+  }, []);
+  
 
   const handleInterpolationStartChange = (event, value) => {
     setInterpolationStartIndex(value);
@@ -183,8 +197,8 @@ function App() {
     setOffset(value);
 
     const numValues = Math.round(sliderValue);
-    const offsettedX = resampledChartData.x.slice(offset, Math.min(offset + numValues, resampledChartData.x.length));
-    const offsettedY = resampledChartData.y.slice(offset, Math.min(offset + numValues, resampledChartData.y.length));
+    const offsettedX = resampledChartData.x.slice(value, Math.min(value + numValues, resampledChartData.x.length));
+    const offsettedY = resampledChartData.y.slice(value, Math.min(value + numValues, resampledChartData.y.length));
 
     const offsettedChartData = {
       name: 'Offsetted',
@@ -196,8 +210,27 @@ function App() {
   };
 
   const handleLowpassToggle = () => {
+    if (!lowpassFilterEnabled) {
+      // Apply lowpass filter
+      const filteredY = applyLowpassFilter(chartData.y, cutoffFrequency, sampleRate);
+      setChartData((prevChartData) => ({
+        ...prevChartData,
+        name: 'Lowpass filter',
+        y: filteredY,
+      }));
+    } else {
+      // Restore original data
+      setChartData((prevChartData) => ({
+        ...prevChartData,
+        name: 'Your Data',
+        y: originalChartData.y,
+      }));
+    }
+  
     setLowpassEnabled(!lowpassFilterEnabled);
   };
+  
+  
 
   const handleDataSourceSwitch = (value) => {
     setSelectedSource(value);
@@ -349,7 +382,14 @@ function App() {
     <div className="App">
       <div className="ChartPlotter">
         <div>
-          <Chart data={[filteredChartData, resampledChartData, offsettedChartData, interpolatedChartData]} />
+        <Chart
+      data={[
+        filteredChartData,
+        resampledChartData,
+        offsettedChartData,
+        interpolatedChartData,
+      ]}
+    />
         </div>
       </div>
       <div className="Options">
@@ -398,6 +438,7 @@ function App() {
           handleSampleRate={handleSampleRate}
         />
 
+        <div className="Space"></div>
         <div className="slider-container">
           <SliderInput
             value={sliderValue}
@@ -450,41 +491,12 @@ function App() {
               name={'Original'}
             />
           </div>
-          
         </div>
       </div>
-      <div className="Data2">
-      <div className="Space"></div>
-        <button
-          className="FunctionalButton"
-          onClick={() => dataManagement.copyDataToTxt(resampledChartData)}
-        >
-          Download resampled data in .txt
-        </button>
-        <button
-          className="FunctionalButton"
-          onClick={() => dataManagement.copyDataToTxt(chartData)}
-        >
-          Download original data in .txt
-        </button>
-        <div className="Space"></div>
-        <button
-          className="FunctionalButton"
-          onClick={() =>
-            navigator.clipboard.writeText(dataManagement.clearingDataText(resampledChartData))
-          }
-        >
-          Copy resampled data to clipboard
-        </button>
-        <button
-          className="FunctionalButton"
-          onClick={() =>
-            navigator.clipboard.writeText(dataManagement.clearingDataText(chartData))
-          }
-        >
-          Copy original data to clipboard
-        </button>
-      </div>
+      <DownloadingData
+        resampledChartData={resampledChartData}
+        chartData={chartData}
+      />
     </div>
   );
 }

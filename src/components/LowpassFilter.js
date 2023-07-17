@@ -6,6 +6,9 @@ import SliderInput from './SliderInput';
 export default function LowpassFilter({ lowpassFilterEnabled, handleLowpassToggle, cutoffFrequency, handleCutoffFrequency, sampleRate, handleSampleRate }) {
     return (
       <>
+        <div class="ui icon button" data-content="...">
+          <i class="info icon"></i>
+        </div>
         <div className="LowpassToggle">
           <label>Lowpass Filter:</label>
           <input
