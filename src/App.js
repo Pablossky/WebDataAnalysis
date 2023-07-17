@@ -13,7 +13,6 @@ import DataBox from './components/DataBox';
 import LowpassFilter from './components/LowpassFilter';
 import DownloadingData from './components/DownloadingData';
 
-const dataManagement = require("./functionality/dataManagement");
 const numeric = require('numeric');
 
 function App() {
@@ -27,34 +26,18 @@ function App() {
   const [lowpassFilterEnabled, setLowpassEnabled] = useState(false);
   const [cutoffFrequency, setCutoffFrequency] = useState(1000);
   const [sampleRate, setSampleRate] = useState(1000);
-  const [chartData, setChartData] = useState({
+  const [originalChartData, setOriginalChartData] = useState({
     name: 'default',
     x: [1, 2, 3, 4],
     y: [1, 2, 1, 2]
   });
-  const [resampledChartData, setResampledChartData] = useState({
-    name: 'default',
-    x: [1, 2, 3, 4],
-    y: [1, 2, 1, 2]
-  });
+  const [chartData, setChartData] = useState(originalChartData);
+  const [resampledChartData, setResampledChartData] = useState(originalChartData);
   const [offsettedChartData, setOffsettedChartData] = useState({
     name: 'offsetted',
     x: [],
     y: []
   });
-  const [originalChartData, setOriginalChartData] = useState({
-    name: 'Your Data',
-    y: [] // Initialize with the original Y values
-  });
-  
-  // Initialize originalChartData in useEffect or elsewhere
-  useEffect(() => {
-    setOriginalChartData({
-      ...originalChartData,
-      y: chartData.y
-    });
-  }, []);
-  
 
   const handleInterpolationStartChange = (event, value) => {
     setInterpolationStartIndex(value);
@@ -111,6 +94,7 @@ function App() {
       const y = parsedData.map((item) => parseFloat(item.Y));
 
       setChartData({ name: 'Your Data', x, y });
+      setOriginalChartData({ name: 'Your Data', x, y });
     };
   };
 
@@ -132,7 +116,7 @@ function App() {
   };
 
   const handleInterpolation = () => {
-    const { x, y } = filteredChartData;
+    const { x, y } = chartData;
     const { x: interpolatedX, y: interpolatedY } = interpolateArray(
       x,
       y,
@@ -197,8 +181,8 @@ function App() {
     setOffset(value);
 
     const numValues = Math.round(sliderValue);
-    const offsettedX = resampledChartData.x.slice(value, Math.min(value + numValues, resampledChartData.x.length));
-    const offsettedY = resampledChartData.y.slice(value, Math.min(value + numValues, resampledChartData.y.length));
+    const offsettedX = resampledChartData.x.slice(offset, Math.min(offset + numValues, resampledChartData.x.length));
+    const offsettedY = resampledChartData.y.slice(offset, Math.min(offset + numValues, resampledChartData.y.length));
 
     const offsettedChartData = {
       name: 'Offsetted',
@@ -210,39 +194,20 @@ function App() {
   };
 
   const handleLowpassToggle = () => {
-    if (!lowpassFilterEnabled) {
-      // Apply lowpass filter
-      const filteredY = applyLowpassFilter(chartData.y, cutoffFrequency, sampleRate);
-      setChartData((prevChartData) => ({
-        ...prevChartData,
-        name: 'Lowpass filter',
-        y: filteredY,
-      }));
-    } else {
-      // Restore original data
-      setChartData((prevChartData) => ({
-        ...prevChartData,
-        name: 'Your Data',
-        y: originalChartData.y,
-      }));
-    }
-  
     setLowpassEnabled(!lowpassFilterEnabled);
   };
-  
-  
 
   const handleDataSourceSwitch = (value) => {
     setSelectedSource(value);
 
     if (value === 'dataFile') {
-      setChartData({
+      setOriginalChartData({
         name: 'dataFile',
         x: chartData.x,
         y: chartData.y,
       });
     } else if (value === 'default') {
-      setChartData({ name: 'default', x: [1, 2, 3, 4], y: [1, 2, 1, 2] });
+      setOriginalChartData({ name: 'default', x: [1, 2, 3, 4], y: [1, 2, 1, 2] });
     } else if (value === 'interpolated') {
       const { x: interpolatedX, y: interpolatedY } = interpolateArray(
         chartData.x,
@@ -259,7 +224,7 @@ function App() {
         x: interpolatedX.slice(interpolationStart, interpolationEnd),
         y: interpolatedY.slice(interpolationStart, interpolationEnd),
       };
-      setChartData(interpolatedChartData);
+      setOriginalChartData(interpolatedChartData);
     }
   };
 
@@ -282,16 +247,17 @@ function App() {
     const y = parsedData.map((item) => item.Y);
 
     setChartData({ name: 'dataFile', x, y });
+    setOriginalChartData({ name: 'dataFile', x, y });
 
     event.preventDefault();
   };
 
   const filteredChartData = lowpassFilterEnabled
     ? {
-      ...chartData,
-      name: 'Lowpass filter',
-      y: applyLowpassFilter(chartData.y, cutoffFrequency, sampleRate),
-    }
+        ...chartData,
+        name: 'Lowpass filter',
+        y: applyLowpassFilter(originalChartData.y, cutoffFrequency, sampleRate),
+      }
     : chartData;
 
   const renderData = () => {
@@ -321,7 +287,7 @@ function App() {
     } else if (selectedSource === 'default') {
       return (
         <div>
-          {chartData.x.length > 0 && (
+          {originalChartData.x.length > 0 && (
             <table className="table">
               <thead>
                 <tr>
@@ -330,10 +296,10 @@ function App() {
                 </tr>
               </thead>
               <tbody>
-                {chartData.x.map((xValue, index) => (
+                {originalChartData.x.map((xValue, index) => (
                   <tr key={index}>
                     <td>{xValue.toFixed(3)}</td>
-                    <td>{chartData.y[index].toFixed(3)}</td>
+                    <td>{originalChartData.y[index].toFixed(3)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -344,7 +310,7 @@ function App() {
     } else if (selectedSource === 'interpolated') {
       return (
         <div>
-          {chartData.x.length > 0 && (
+          {originalChartData.x.length > 0 && (
             <table className="table">
               <thead>
                 <tr>
@@ -353,10 +319,10 @@ function App() {
                 </tr>
               </thead>
               <tbody>
-                {chartData.x.map((xValue, index) => (
+                {originalChartData.x.map((xValue, index) => (
                   <tr key={index}>
                     <td>{xValue.toFixed(3)}</td>
-                    <td>{chartData.y[index].toFixed(3)}</td>
+                    <td>{originalChartData.y[index].toFixed(3)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -364,6 +330,33 @@ function App() {
           )}
         </div>
       );
+    }
+  };
+
+  const renderFilteredData = () => {
+    if (filteredChartData.x.length > 0) {
+      return (
+        <div>
+          <table className="table">
+            <thead>
+              <tr>
+                <th>X</th>
+                <th>Y</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredChartData.x.map((xValue, index) => (
+                <tr key={index}>
+                  <td>{xValue.toFixed(3)}</td>
+                  <td>{filteredChartData.y[index].toFixed(3)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    } else {
+      return null;
     }
   };
 
@@ -382,14 +375,7 @@ function App() {
     <div className="App">
       <div className="ChartPlotter">
         <div>
-        <Chart
-      data={[
-        filteredChartData,
-        resampledChartData,
-        offsettedChartData,
-        interpolatedChartData,
-      ]}
-    />
+          <Chart data={[filteredChartData, resampledChartData, offsettedChartData, interpolatedChartData]} />
         </div>
       </div>
       <div className="Options">
@@ -487,15 +473,21 @@ function App() {
               name={'Resampled'}
             />
             <DataBox
-              value={renderData(selectedSource)}
+              value={renderData()}
               name={'Original'}
             />
+            <DataBox
+              value={renderFilteredData()}
+              name={'Filtered'}
+            />
           </div>
+          
         </div>
       </div>
       <DownloadingData
-        resampledChartData={resampledChartData}
-        chartData={chartData}
+        data1={resampledChartData}
+        data2={chartData}
+        data3={filteredChartData}
       />
     </div>
   );

@@ -6,7 +6,7 @@ import 'toolcool-range-slider';
 
 const dataManagement = require("../functionality/dataManagement.js");
 
-const DownloadingData = ({ data1, data2 }) => {
+const DownloadingData = ({ data1, data2, data3 }) => {
     return (
         <div className="Data2">
               <div className="Space"></div>
@@ -21,6 +21,12 @@ const DownloadingData = ({ data1, data2 }) => {
                   onClick={() => dataManagement.copyDataToTxt(data2)}
                 >
                   Download original data in .txt
+                </button>
+                <button
+                  className="FunctionalButton"
+                  onClick={() => dataManagement.copyDataToTxt(data3)}
+                >
+                  Download filtered data in .txt
                 </button>
                 <div className="Space"></div>
                 <button
@@ -38,6 +44,14 @@ const DownloadingData = ({ data1, data2 }) => {
                   }
                 >
                   Copy original data to clipboard
+                </button>
+                <button
+                  className="FunctionalButton"
+                  onClick={() =>
+                    navigator.clipboard.writeText(dataManagement.clearingDataText(data3))
+                  }
+                >
+                  Copy filtered data to clipboard
                 </button>
               </div>
     )}
