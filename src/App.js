@@ -3,6 +3,7 @@ import { Dropdown, Popup, Input } from 'semantic-ui-react';
 import Chart from "./components/mychart.js";
 import "./functionality/dataManagement.js";
 import "./functionality/plottingData.js";
+import { calculateDerivative } from './functionality/calculateDerivative.js';
 import { renderData, renderFilteredData, renderGeneratedArray } from "./functionality/renderingData.js";
 import 'semantic-ui-css/semantic.min.css';
 import 'toolcool-range-slider';
@@ -285,21 +286,39 @@ function App() {
     }
     : chartData;
 
-  const handleSelectArea = (startIndex, endIndex) => {
-    const { x, y } = chartData;
-
-    const selectedX = x.slice(startIndex, endIndex);
-    const selectedY = y.slice(startIndex, endIndex);
-
-    const selectedChartData = {
-      name: 'Selected Area',
-      x: selectedX,
-      y: selectedY,
+    const handleSelectArea = (startIndex, endIndex) => {
+      const { x, y } = chartData;
+    
+      const selectedX = x.slice(startIndex, endIndex);
+      const selectedY = y.slice(startIndex, endIndex);
+    
+      const selectedChartData = {
+        name: 'Selected Area',
+        x: selectedX,
+        y: selectedY,
+      };
+    
+      const derivative = calculateDerivative(selectedY);
+    
+      // Find the index of the highest income (maximum derivative value)
+      const maxDerivativeIndex = derivative.indexOf(Math.max(...derivative));
+    
+      // Calculate the start and end indices based on the maximum derivative index
+      const start = startIndex + maxDerivativeIndex;
+      const end = startIndex + maxDerivativeIndex + 1;
+    
+      const highestIncomeX = x.slice(start, end);
+      const highestIncomeY = y.slice(start, end);
+    
+      const highestIncomeArea = {
+        name: 'Highest Income',
+        x: highestIncomeX,
+        y: highestIncomeY,
+      };
+    
+      setSelectedArea(showSelectedArea ? highestIncomeArea : {});
     };
-
-    setSelectedArea(selectedChartData);
-  };
-
+    
   return (
     <div className="App">
       <div className="ChartPlotter">
