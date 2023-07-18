@@ -12,6 +12,8 @@ import SliderInput from './components/SliderInput';
 import DataBox from './components/DataBox';
 import LowpassFilter from './components/LowpassFilter';
 import DownloadingData from './components/DownloadingData';
+import Akima from 'akima-interpolator';
+
 
 const numeric = require('numeric');
 
@@ -41,6 +43,9 @@ function App() {
     y: []
   });
   const [selectedArea, setSelectedArea] = useState({});
+  const [highestDerivativeLine, setHighestDerivativeLine] = useState(null);
+  const [nextPoint, setNextPoint] = useState(null);
+
 
   const handleInterpolationOffsetChange = (event, value) => {
     setInterpolationOffset(value);
@@ -276,7 +281,7 @@ function App() {
   const handleShowSelectedArea = () => {
     setShowSelectedArea(!showSelectedArea);
   };
-  
+
 
   const filteredChartData = lowpassFilterEnabled
     ? {
@@ -298,27 +303,69 @@ function App() {
         y: selectedY,
       };
     
-      const derivative = calculateDerivative(selectedY);
+      let areaData = selectedChartData;
     
-      // Find the index of the highest income (maximum derivative value)
-      const maxDerivativeIndex = derivative.indexOf(Math.max(...derivative));
+      if (selectedSource !== 'interpolated') {
+        const derivative = calculateDerivative(selectedY);
     
-      // Calculate the start and end indices based on the maximum derivative index
-      const start = startIndex + maxDerivativeIndex;
-      const end = startIndex + maxDerivativeIndex + 1;
+        // Find the index of the highest income (maximum derivative value)
+        const maxDerivativeIndex = derivative.indexOf(Math.max(...derivative));
     
-      const highestIncomeX = x.slice(start, end);
-      const highestIncomeY = y.slice(start, end);
+        // Calculate the start and end indices based on the maximum derivative index
+        const start = startIndex + maxDerivativeIndex;
+        const end = startIndex + maxDerivativeIndex + 1;
     
-      const highestIncomeArea = {
-        name: 'Highest Income',
-        x: highestIncomeX,
-        y: highestIncomeY,
-      };
+        const highestIncomeX = x.slice(start, end);
+        const highestIncomeY = y.slice(start, end);
     
-      setSelectedArea(showSelectedArea ? highestIncomeArea : {});
+        const highestIncomeArea = {
+          name: 'Highest Income Area',
+          x: highestIncomeX,
+          y: highestIncomeY,
+        };
+    
+        areaData = highestIncomeArea;
+    
+        // Calculate line data
+        const nextPointIndex = start + 1;
+        if (nextPointIndex < x.length) {
+          const highestDerivativeLineData = {
+            datasets: [{
+              label: 'Highest Derivative Line',
+              data: [
+                { x: highestIncomeX[0], y: highestIncomeY[0] },
+                { x: x[nextPointIndex], y: y[nextPointIndex] },
+              ],
+              fill: false,
+              borderColor: 'red',
+              borderWidth: 2,
+              borderDash: [5, 5],
+            }],
+          };
+          setHighestDerivativeLine(highestDerivativeLineData);
+    
+          // Calculate point data
+          const nextPointData = {
+            datasets: [{
+              label: 'Next Point',
+              data: [{ x: x[nextPointIndex], y: y[nextPointIndex] }],
+              backgroundColor: 'red',
+              borderColor: 'red',
+              pointRadius: 5,
+              pointHoverRadius: 7,
+            }],
+          };
+          setNextPoint(nextPointData);
+        } else {
+          setHighestDerivativeLine(null);
+          setNextPoint(null);
+        }
+      }
+    
+      setSelectedArea(showSelectedArea ? areaData : {});
     };
     
+
   return (
     <div className="App">
       <div className="ChartPlotter">
@@ -392,7 +439,7 @@ function App() {
             checked={showSelectedArea}
             onChange={handleShowSelectedArea}
           />
-          Show Selected Area on Chart
+          Show point with the highest derivative
         </div>
         <div className="Space"></div>
         <LowpassFilter

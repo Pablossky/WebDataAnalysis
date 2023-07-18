@@ -9,6 +9,7 @@
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
+    "akima-interpolator": "^1.0.0",
     "numeric": "^1.2.6",
     "plotly.js": "^2.24.2",
     "plotly.js-basic-dist": "^2.24.3",
