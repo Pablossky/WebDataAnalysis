@@ -1,4 +1,3 @@
-import './App.css';
 import React, { useState, useEffect } from 'react';
 import { Dropdown, Popup, Input } from 'semantic-ui-react';
 import Chart from "./components/mychart.js";
@@ -22,8 +21,10 @@ function App() {
   const [selectedSource, setSelectedSource] = useState('dataFile');
   const [selectedInterpolation, setSelectedInterpolation] = useState('linear');
   const [offset, setOffset] = useState(0);
-  const [interpolationStartIndex, setInterpolationStartIndex] = useState(0);
+  const [interpolationOffset, setInterpolationOffset] = useState(0);
   const [lowpassFilterEnabled, setLowpassEnabled] = useState(false);
+  const [printSelectedArea, setPrintSelectedArea] = useState(false);
+  const [showSelectedArea, setShowSelectedArea] = useState(false);
   const [cutoffFrequency, setCutoffFrequency] = useState(1000);
   const [sampleRate, setSampleRate] = useState(1000);
   const [originalChartData, setOriginalChartData] = useState({
@@ -38,15 +39,13 @@ function App() {
     x: [],
     y: []
   });
+  const [selectedArea, setSelectedArea] = useState({});
 
-  const handleInterpolationStartChange = (event, value) => {
-    const numValues = Math.round(sliderValue);
-    const interpolationStart = Math.round(value * (numValues - 1));
-
-    setInterpolationStartIndex(interpolationStart);
+  const handleInterpolationOffsetChange = (event, value) => {
+    setInterpolationOffset(value);
   };
 
-  function interpolateArray(x, y, numValues, method) {
+  function interpolateArray(x, y, numValues, method, offset) {
     let interpolatedX, interpolatedY;
 
     if (method === 'linear') {
@@ -58,7 +57,7 @@ function App() {
         const index = Math.floor(fraction * (x.length - 1));
         const dx = fraction * (x[x.length - 1] - x[0]);
         const interpolatedXValue = x[0] + dx;
-        const interpolatedYValue = y[index] + (y[index + 1] - y[index]) * (dx - x[index]) / (x[index + 1] - x[index]);
+        const interpolatedYValue = y[index + offset] + (y[index + offset + 1] - y[index + offset]) * (dx - x[index + offset]) / (x[index + offset + 1] - x[index + offset]);
         interpolatedX.push(interpolatedXValue);
         interpolatedY.push(interpolatedYValue);
       }
@@ -82,6 +81,10 @@ function App() {
     x: [],
     y: []
   });
+
+  const handlePrintSelectedArea = () => {
+    setPrintSelectedArea(!printSelectedArea);
+  };
 
   const handleFileUpload = (e) => {
     const reader = new FileReader();
@@ -108,7 +111,7 @@ function App() {
 
   useEffect(() => {
     handleInterpolation();
-  }, [lowpassFilterEnabled, chartData, interpolationStartIndex]);
+  }, [lowpassFilterEnabled, chartData, interpolationOffset]);
 
   useEffect(() => {
     handleInterpolation();
@@ -124,18 +127,28 @@ function App() {
 
   const handleInterpolation = () => {
     const { x, y } = chartData;
+    const numValues = Math.round(sliderValue);
+    const startIndex = Math.round(interpolationOffset * (x.length - numValues));
+
+    const slicedX = x.slice(startIndex, startIndex + numValues);
+    const slicedY = y.slice(startIndex, startIndex + numValues);
+
     const { x: interpolatedX, y: interpolatedY } = interpolateArray(
-      x,
-      y,
-      x.length,
+      slicedX,
+      slicedY,
+      numValues,
       selectedInterpolation
     );
+
     const interpolatedData = {
       name: 'Interpolated',
       x: interpolatedX,
       y: interpolatedY,
     };
     setInterpolatedChartData(interpolatedData);
+
+    // Select and display the area on the chart
+    handleSelectArea(startIndex, startIndex + numValues);
   };
 
   const handleSliderChange = (event, value) => {
@@ -208,30 +221,30 @@ function App() {
     setSelectedSource(value);
 
     if (value === 'dataFile') {
-      setOriginalChartData({
+      setChartData({
         name: 'dataFile',
-        x: chartData.x,
-        y: chartData.y,
+        x: originalChartData.x,
+        y: originalChartData.y,
       });
     } else if (value === 'default') {
-      setOriginalChartData({ name: 'default', x: [1, 2, 3, 4], y: [1, 2, 1, 2] });
+      setChartData({ name: 'default', x: [1, 2, 3, 4], y: [1, 2, 1, 2] });
     } else if (value === 'interpolated') {
       const { x: interpolatedX, y: interpolatedY } = interpolateArray(
-        chartData.x,
-        chartData.y,
-        chartData.x.length,
-        selectedInterpolation
+        originalChartData.x,
+        originalChartData.y,
+        originalChartData.x.length,
+        selectedInterpolation,
+        interpolationOffset
       );
 
-      const interpolationStart = Math.round(interpolationStartIndex * (interpolatedX.length - 1));
-      const interpolationEnd = interpolatedX.length - 1;
+      const interpolationStart = Math.round(interpolationOffset * (interpolatedX.length - 1));
+      const interpolationEnd = interpolatedX.length;
 
-      const interpolatedChartData = {
+      setChartData({
         name: 'Interpolated',
         x: interpolatedX.slice(interpolationStart, interpolationEnd),
         y: interpolatedY.slice(interpolationStart, interpolationEnd),
-      };
-      setOriginalChartData(interpolatedChartData);
+      });
     }
   };
 
@@ -259,34 +272,62 @@ function App() {
     event.preventDefault();
   };
 
+  const handleShowSelectedArea = () => {
+    setShowSelectedArea(!showSelectedArea);
+  };
+  
+
   const filteredChartData = lowpassFilterEnabled
     ? {
-        ...chartData,
-        name: 'Lowpass filter',
-        y: applyLowpassFilter(originalChartData.y, cutoffFrequency, sampleRate),
-      }
+      ...chartData,
+      name: 'Lowpass filter',
+      y: applyLowpassFilter(originalChartData.y, cutoffFrequency, sampleRate),
+    }
     : chartData;
+
+  const handleSelectArea = (startIndex, endIndex) => {
+    const { x, y } = chartData;
+
+    const selectedX = x.slice(startIndex, endIndex);
+    const selectedY = y.slice(startIndex, endIndex);
+
+    const selectedChartData = {
+      name: 'Selected Area',
+      x: selectedX,
+      y: selectedY,
+    };
+
+    setSelectedArea(selectedChartData);
+  };
 
   return (
     <div className="App">
       <div className="ChartPlotter">
         <div>
-          <Chart data={[filteredChartData, resampledChartData, offsettedChartData, interpolatedChartData]} />
+          <Chart
+            data={[
+              filteredChartData,
+              resampledChartData,
+              offsettedChartData,
+              interpolatedChartData,
+              showSelectedArea ? selectedArea : {},
+            ]}
+          />
         </div>
       </div>
       <div className="Options">
-      <div className="info-button">
-        <Popup
-          content="Choose data from your computer saved in .xlsx file.
-          DATA SOURCE decide which operation will be done earlier.
+        <div className="info-button">
+          <Popup
+            content="Choose data from your computer saved in .xlsx file.
+          DATA SOURCE decides which operation will be done earlier.
           Dropdown menu contains INTERPOLATION METHODS."
-          trigger={
-            <div className="ui icon button">
-              <i className="info icon"></i>
-            </div>
-          }
-        />
-      </div>
+            trigger={
+              <div className="ui icon button">
+                <i className="info icon"></i>
+              </div>
+            }
+          />
+        </div>
         <div className="InputFile">
           Import .xlsx file
           <Input
@@ -294,7 +335,11 @@ function App() {
             accept=".xlsx, .xls"
             onChange={handleFileUpload}
           />
-          
+          <Input
+            className="InputData"
+            defaultValue="Input data..."
+            onChange={handlePaste}
+          />
         </div>
         <div className="Space"></div>
         Data source:
@@ -322,6 +367,14 @@ function App() {
           value={selectedInterpolation}
           onChange={handleInterpolationChange}
         />
+        <div className="ShowOption">
+          <input
+            type="checkbox"
+            checked={showSelectedArea}
+            onChange={handleShowSelectedArea}
+          />
+          Show Selected Area on Chart
+        </div>
         <div className="Space"></div>
         <LowpassFilter
           lowpassFilterEnabled={lowpassFilterEnabled}
@@ -334,15 +387,15 @@ function App() {
 
         <div className="Space"></div>
         <div className="info-button">
-        <Popup
-          content="SAMPLE COUNT changes number of points presented on the Chart. OFFSET give us opportunity to start from non-first sample when generating chart and INTERPOLATION OFFSET allow us to pick moment when interpolations starts."
-          trigger={
-            <div className="ui icon button">
-              <i className="info icon"></i>
-            </div>
-          }
-        />
-      </div>
+          <Popup
+            content="SAMPLE COUNT changes the number of points presented on the Chart. OFFSET gives us the opportunity to start from a non-first sample when generating the chart, and INTERPOLATION OFFSET allows us to pick the moment when interpolation starts."
+            trigger={
+              <div className="ui icon button">
+                <i className="info icon"></i>
+              </div>
+            }
+          />
+        </div>
         <div className="slider-container">
           <SliderInput
             value={sliderValue}
@@ -365,21 +418,17 @@ function App() {
 
         <div className="slider-container">
           <SliderInput
-            value={interpolationStartIndex}
+            value={interpolationOffset}
             min={0}
-            max={sampleCount}
+            max={sampleCount - 1}
             step={1}
-            onChange={handleInterpolationStartChange}
+            onChange={handleInterpolationOffsetChange}
             name={'Interpolation offset'}
           />
         </div>
       </div>
       <div className="Data1">
-        <Input
-          className="InputData"
-          defaultValue="Input data..."
-          onChange={handlePaste}
-        />
+        <div className='Space'></div>
         <div className="DataList">
           <div className="Container">
             <DataBox
@@ -395,19 +444,18 @@ function App() {
               name={'Filtered'}
             />
             <div className="info-button2">
-        <Popup
-          content="ORIGINAL presents imported or pasted data. FILTERED shows original data after applying lowpass filter (only if this option is turned on). RESAMPLED returns filtered data after applying all modifications."
-          trigger={
-            <div className="ui icon button">
-              <i className="info icon"></i>
+              <Popup
+                content="ORIGINAL presents imported or pasted data. FILTERED shows original data after applying a lowpass filter (only if this option is turned on). RESAMPLED returns filtered data after applying all modifications."
+                trigger={
+                  <div className="ui icon button">
+                    <i className="info icon"></i>
+                  </div>
+                }
+              />
             </div>
-          }
-        />
-      </div>
           </div>
         </div>
       </div>
-      
       <DownloadingData
         data1={resampledChartData}
         data2={chartData}
