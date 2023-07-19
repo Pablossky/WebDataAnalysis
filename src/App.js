@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dropdown, Popup, Input } from 'semantic-ui-react';
+import { Dropdown, Popup, Input, Button } from 'semantic-ui-react';
 import Chart from "./components/mychart.js";
 import "./functionality/dataManagement.js";
 import "./functionality/plottingData.js";
@@ -8,14 +8,11 @@ import { renderData, renderFilteredData, renderGeneratedArray } from "./function
 import 'semantic-ui-css/semantic.min.css';
 import 'toolcool-range-slider';
 import applyLowpassFilter from './functionality/lowpassFilter.js';
+import interpolateArray from './functionality/interpolateArray.js';
 import SliderInput from './components/SliderInput';
 import DataBox from './components/DataBox';
 import LowpassFilter from './components/LowpassFilter';
 import DownloadingData from './components/DownloadingData';
-import Akima from 'akima-interpolator';
-
-
-const numeric = require('numeric');
 
 function App() {
   const XLSX = require('xlsx');
@@ -43,6 +40,7 @@ function App() {
     y: []
   });
   const [selectedArea, setSelectedArea] = useState({});
+  const [activeBookmark, setActiveBookmark] = useState('filter');
   const [highestDerivativeLine, setHighestDerivativeLine] = useState(null);
   const [nextPoint, setNextPoint] = useState(null);
 
@@ -50,32 +48,6 @@ function App() {
   const handleInterpolationOffsetChange = (event, value) => {
     setInterpolationOffset(value);
   };
-
-  function interpolateArray(x, y, numValues, method, offset) {
-    let interpolatedX, interpolatedY;
-
-    if (method === 'linear') {
-      interpolatedX = [];
-      interpolatedY = [];
-
-      for (let i = 0; i < numValues; i++) {
-        const fraction = i / (numValues - 1);
-        const index = Math.floor(fraction * (x.length - 1));
-        const dx = fraction * (x[x.length - 1] - x[0]);
-        const interpolatedXValue = x[0] + dx;
-        const interpolatedYValue = y[index + offset] + (y[index + offset + 1] - y[index + offset]) * (dx - x[index + offset]) / (x[index + offset + 1] - x[index + offset]);
-        interpolatedX.push(interpolatedXValue);
-        interpolatedY.push(interpolatedYValue);
-      }
-    } else if (method === 'akima') {
-      const interpolator = numeric.spline(x, y, 'akima');
-
-      interpolatedX = numeric.linspace(x[0], x[x.length - 1], numValues);
-      interpolatedY = interpolatedX.map((value) => interpolator.at(value));
-    }
-
-    return { x: interpolatedX, y: interpolatedY };
-  }
 
   const interpolationMethod = [
     { key: '1', text: 'Linear', value: 'linear' },
@@ -130,6 +102,11 @@ function App() {
   const handleSampleRate = (event, value) => {
     setSampleRate(value);
   };
+
+  const handleBookmarkClick = (bookmark) => {
+    setActiveBookmark(bookmark);
+  };
+
 
   const handleInterpolation = () => {
     const { x, y } = chartData;
@@ -291,80 +268,80 @@ function App() {
     }
     : chartData;
 
-    const handleSelectArea = (startIndex, endIndex) => {
-      const { x, y } = chartData;
-    
-      const selectedX = x.slice(startIndex, endIndex);
-      const selectedY = y.slice(startIndex, endIndex);
-    
-      const selectedChartData = {
-        name: 'Selected Area',
-        x: selectedX,
-        y: selectedY,
-      };
-    
-      let areaData = selectedChartData;
-    
-      if (selectedSource !== 'interpolated') {
-        const derivative = calculateDerivative(selectedY);
-    
-        // Find the index of the highest income (maximum derivative value)
-        const maxDerivativeIndex = derivative.indexOf(Math.max(...derivative));
-    
-        // Calculate the start and end indices based on the maximum derivative index
-        const start = startIndex + maxDerivativeIndex;
-        const end = startIndex + maxDerivativeIndex + 1;
-    
-        const highestIncomeX = x.slice(start, end);
-        const highestIncomeY = y.slice(start, end);
-    
-        const highestIncomeArea = {
-          name: 'Highest Income Area',
-          x: highestIncomeX,
-          y: highestIncomeY,
-        };
-    
-        areaData = highestIncomeArea;
-    
-        // Calculate line data
-        const nextPointIndex = start + 1;
-        if (nextPointIndex < x.length) {
-          const highestDerivativeLineData = {
-            datasets: [{
-              label: 'Highest Derivative Line',
-              data: [
-                { x: highestIncomeX[0], y: highestIncomeY[0] },
-                { x: x[nextPointIndex], y: y[nextPointIndex] },
-              ],
-              fill: false,
-              borderColor: 'red',
-              borderWidth: 2,
-              borderDash: [5, 5],
-            }],
-          };
-          setHighestDerivativeLine(highestDerivativeLineData);
-    
-          // Calculate point data
-          const nextPointData = {
-            datasets: [{
-              label: 'Next Point',
-              data: [{ x: x[nextPointIndex], y: y[nextPointIndex] }],
-              backgroundColor: 'red',
-              borderColor: 'red',
-              pointRadius: 5,
-              pointHoverRadius: 7,
-            }],
-          };
-          setNextPoint(nextPointData);
-        } else {
-          setHighestDerivativeLine(null);
-          setNextPoint(null);
-        }
-      }
-    
-      setSelectedArea(showSelectedArea ? areaData : {});
+  const handleSelectArea = (startIndex, endIndex) => {
+    const { x, y } = chartData;
+
+    const selectedX = x.slice(startIndex, endIndex);
+    const selectedY = y.slice(startIndex, endIndex);
+
+    const selectedChartData = {
+      name: 'Selected Area',
+      x: selectedX,
+      y: selectedY,
     };
-    
+
+    let areaData = selectedChartData;
+
+    if (selectedSource !== 'interpolated') {
+      const derivative = calculateDerivative(selectedY);
+
+      // Find the index of the highest income (maximum derivative value)
+      const maxDerivativeIndex = derivative.indexOf(Math.max(...derivative));
+
+      // Calculate the start and end indices based on the maximum derivative index
+      const start = startIndex + maxDerivativeIndex;
+      const end = startIndex + maxDerivativeIndex + 1;
+
+      const highestIncomeX = x.slice(start, end);
+      const highestIncomeY = y.slice(start, end);
+
+      const highestIncomeArea = {
+        name: 'Highest Income Area',
+        x: highestIncomeX,
+        y: highestIncomeY,
+      };
+
+      areaData = highestIncomeArea;
+
+      // Calculate line data
+      const nextPointIndex = start + 1;
+      if (nextPointIndex < x.length) {
+        const highestDerivativeLineData = {
+          datasets: [{
+            label: 'Highest Derivative Line',
+            data: [
+              { x: highestIncomeX[0], y: highestIncomeY[0] },
+              { x: x[nextPointIndex], y: y[nextPointIndex] },
+            ],
+            fill: false,
+            borderColor: 'red',
+            borderWidth: 2,
+            borderDash: [5, 5],
+          }],
+        };
+        setHighestDerivativeLine(highestDerivativeLineData);
+
+        // Calculate point data
+        const nextPointData = {
+          datasets: [{
+            label: 'Next Point',
+            data: [{ x: x[nextPointIndex], y: y[nextPointIndex] }],
+            backgroundColor: 'red',
+            borderColor: 'red',
+            pointRadius: 5,
+            pointHoverRadius: 7,
+          }],
+        };
+        setNextPoint(nextPointData);
+      } else {
+        setHighestDerivativeLine(null);
+        setNextPoint(null);
+      }
+    }
+
+    setSelectedArea(showSelectedArea ? areaData : {});
+  };
+
 
   return (
     <div className="App">
@@ -381,135 +358,182 @@ function App() {
           />
         </div>
       </div>
-      <div className="Options">
-        <div className="info-button">
-          <Popup
-            content="Choose data from your computer saved in .xlsx file.
+
+      <div className="OptionsPanel">
+  <div className="ui fluid vertical pointing menu">
+    <Button
+      className={`Bookmark ${activeBookmark === 'input' ? 'active' : ''}`}
+      onClick={() => handleBookmarkClick('input')}
+      primary={activeBookmark === 'input'}
+    >
+      Input Options
+    </Button>
+    <Button
+      className={`Bookmark ${activeBookmark === 'filter' ? 'active' : ''}`}
+      onClick={() => handleBookmarkClick('filter')}
+      primary={activeBookmark === 'filter'}
+    >
+      Filter Options
+    </Button>
+    <Button
+      className={`Bookmark ${activeBookmark === 'interpolation' ? 'active' : ''}`}
+      onClick={() => handleBookmarkClick('interpolation')}
+      primary={activeBookmark === 'interpolation'}
+    >
+      Interpolation Options
+    </Button>
+    <Button
+      className={`Bookmark ${activeBookmark === 'data' ? 'active' : ''}`}
+      onClick={() => handleBookmarkClick('data')}
+      primary={activeBookmark === 'data'}
+    >
+      Data Tables
+    </Button>
+    <Button
+      className={`Bookmark ${activeBookmark === 'downloading' ? 'active' : ''}`}
+      onClick={() => handleBookmarkClick('downloading')}
+      primary={activeBookmark === 'downloading'}
+    >
+      Downloading Data
+    </Button>
+  </div>
+
+        {activeBookmark === 'input' && (
+          <div className="InputData">
+            <div className="info-button">
+              <Popup
+                content="Choose data from your computer saved in .xlsx file.
           DATA SOURCE decides which operation will be done earlier.
           Dropdown menu contains INTERPOLATION METHODS."
-            trigger={
-              <div className="ui icon button">
-                <i className="info icon"></i>
-              </div>
-            }
-          />
-        </div>
-        <div className="InputFile">
-          Import .xlsx file
-          <Input
-            type="file"
-            accept=".xlsx, .xls"
-            onChange={handleFileUpload}
-          />
-          <Input
-            className="InputData"
-            defaultValue="Input data..."
-            onChange={handlePaste}
-          />
-        </div>
-        <div className="Space"></div>
-        Data source:
-        <div className="ui buttons">
-          <button
-            className={`ui button ${selectedSource === 'dataFile' ? 'active' : ''}`}
-            onClick={() => handleDataSourceSwitch('dataFile')}
-          >
-            Original
-          </button>
-          <button
-            className={`ui button ${selectedSource === 'interpolated' ? 'active' : ''}`}
-            onClick={() => handleDataSourceSwitch('interpolated')}
-          >
-            Interpolated
-          </button>
-        </div>
-        <div className="Space"></div>
+                trigger={
+                  <div className="ui icon button">
+                    <i className="info icon"></i>
+                  </div>
+                }
+              />
+            </div>
+            <div className="InputFile">
+              Import .xlsx file
+              <div></div>
+              <Input
+                type="file"
+                accept=".xlsx, .xls"
+                onChange={handleFileUpload}
+              />
 
-        Interpolation method:
-        <Dropdown
-          placeholder="Choose method"
-          selection
-          options={interpolationMethod}
-          value={selectedInterpolation}
-          onChange={handleInterpolationChange}
-        />
-        <div className="ShowOption">
-          <input
-            type="checkbox"
-            checked={showSelectedArea}
-            onChange={handleShowSelectedArea}
-          />
-          Show point with the highest derivative
-        </div>
-        <div className="Space"></div>
-        <LowpassFilter
-          lowpassFilterEnabled={lowpassFilterEnabled}
-          handleLowpassToggle={handleLowpassToggle}
-          cutoffFrequency={cutoffFrequency}
-          handleCutoffFrequency={handleCutoffFrequency}
-          sampleRate={sampleRate}
-          handleSampleRate={handleSampleRate}
-        />
+              <div className="Space"></div>
+              Paste data from clipboard
+              <div></div>
+              <Input
+                className="InputData"
+                defaultValue="Input data..."
+                onChange={handlePaste}
+              />
+            </div>
+            <div className="Space"></div>
+            Data source:
+            <div className="ui buttons">
+              <button
+                className={`ui button ${selectedSource === 'dataFile' ? 'active' : ''}`}
+                onClick={() => handleDataSourceSwitch('dataFile')}
+              >
+                Original
+              </button>
+              <button
+                className={`ui button ${selectedSource === 'interpolated' ? 'active' : ''}`}
+                onClick={() => handleDataSourceSwitch('interpolated')}
+              >
+                Interpolated
+              </button>
+            </div>
+            <div className="Space"></div>
 
-        <div className="Space"></div>
-        <div className="info-button">
-          <Popup
-            content="SAMPLE COUNT changes the number of points presented on the Chart. OFFSET gives us the opportunity to start from a non-first sample when generating the chart, and INTERPOLATION OFFSET allows us to pick the moment when interpolation starts."
-            trigger={
-              <div className="ui icon button">
-                <i className="info icon"></i>
-              </div>
-            }
-          />
-        </div>
-        <div className="slider-container">
-          <SliderInput
-            value={sliderValue}
-            min={0}
-            max={8 * chartData.x.length}
-            onChange={handleSliderChange}
-            name={'Sample Count'}
-          />
-        </div>
-
-        <div className="offset-slider-container">
-          <SliderInput
-            value={offset}
-            min={0}
-            max={(sliderValue / 2) - 1}
-            onChange={handleOffsetSliderChange}
-            name={'Offset'}
-          />
-        </div>
-
-        <div className="slider-container">
-          <SliderInput
-            value={interpolationOffset}
-            min={0}
-            max={sampleCount - 1}
-            step={1}
-            onChange={handleInterpolationOffsetChange}
-            name={'Interpolation offset'}
-          />
-        </div>
-      </div>
-      <div className="Data1">
-        <div className='Space'></div>
-        <div className="DataList">
-          <div className="Container">
-            <DataBox
-              value={renderGeneratedArray(resampledChartData, offset, sampleCount)}
-              name={'Resampled'}
+            Interpolation method:
+            <Dropdown
+              placeholder="Choose method"
+              selection
+              options={interpolationMethod}
+              value={selectedInterpolation}
+              onChange={handleInterpolationChange}
             />
-            <DataBox
-              value={renderData(chartData, originalChartData, selectedSource)}
-              name={'Original'}
-            />
-            <DataBox
-              value={renderFilteredData(filteredChartData)}
-              name={'Filtered'}
-            />
-            <div className="info-button2">
+
+            <div className="Space"></div>
+            <div className="ShowOption">
+              <input
+                type="checkbox"
+                checked={showSelectedArea}
+                onChange={handleShowSelectedArea}
+              />
+              Show point with the highest derivative
+            </div>
+          </div>
+        )}
+
+        {activeBookmark === 'filter' && (
+          <div className="FilterOptions">
+            <div>
+              <LowpassFilter
+                lowpassFilterEnabled={lowpassFilterEnabled}
+                handleLowpassToggle={handleLowpassToggle}
+                cutoffFrequency={cutoffFrequency}
+                handleCutoffFrequency={handleCutoffFrequency}
+                sampleRate={sampleRate}
+                handleSampleRate={handleSampleRate}
+              />
+            </div>
+          </div>
+        )}
+
+        {activeBookmark === 'interpolation' && (
+          <div className="InterpolationOptions">
+            <div className="info-button">
+              <Popup
+                content="SAMPLE COUNT changes the number of points presented on the Chart. OFFSET gives us the opportunity to start from a non-first sample when generating the chart, and INTERPOLATION OFFSET allows us to pick the moment when interpolation starts."
+                trigger={
+                  <div className="ui icon button">
+                    <i className="info icon"></i>
+                  </div>
+                }
+              />
+            </div>
+
+            <div className="Space"></div>
+            <div className="slider-container">
+              <SliderInput
+                value={sliderValue}
+                min={0}
+                max={8 * chartData.x.length}
+                onChange={handleSliderChange}
+                name={'Sample Count'}
+              />
+            </div>
+
+            <div className="offset-slider-container">
+              <SliderInput
+                value={offset}
+                min={0}
+                max={(sliderValue / 2) - 1}
+                onChange={handleOffsetSliderChange}
+                name={'Offset'}
+              />
+            </div>
+
+            <div className="slider-container">
+              <SliderInput
+                value={interpolationOffset}
+                min={0}
+                max={sampleCount - 1}
+                step={1}
+                onChange={handleInterpolationOffsetChange}
+                name={'Interpolation offset'}
+              />
+            </div>
+          </div>
+        )}
+
+        {activeBookmark === 'data' && (
+          <div className="DataTables">
+            <div className="info-button">
               <Popup
                 content="ORIGINAL presents imported or pasted data. FILTERED shows original data after applying a lowpass filter (only if this option is turned on). RESAMPLED returns filtered data after applying all modifications."
                 trigger={
@@ -519,14 +543,36 @@ function App() {
                 }
               />
             </div>
+            
+            <div className="Space"></div>
+            <div className="Container">
+              <DataBox
+                value={renderGeneratedArray(resampledChartData, offset, sampleCount)}
+                name={'Resampled'}
+              />
+              <DataBox
+                value={renderData(chartData, originalChartData, selectedSource)}
+                name={'Original'}
+              />
+              <DataBox
+                value={renderFilteredData(filteredChartData)}
+                name={'Filtered'}
+              />
+
+            </div>
           </div>
-        </div>
+        )}
+
+        {activeBookmark === 'downloading' && (
+          <div className="Downloading">
+              <DownloadingData
+                data1={resampledChartData}
+                data2={chartData}
+                data3={filteredChartData}
+              />
+          </div>
+        )}
       </div>
-      <DownloadingData
-        data1={resampledChartData}
-        data2={chartData}
-        data3={filteredChartData}
-      />
     </div>
   );
 }

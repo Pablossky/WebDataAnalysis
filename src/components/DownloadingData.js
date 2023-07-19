@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from 'semantic-ui-react';
+import { Button, Popup } from 'semantic-ui-react';
 import '../App.css';
 import '../functionality/dataManagement';
 import 'semantic-ui-css/semantic.min.css';
@@ -9,20 +9,31 @@ const dataManagement = require('../functionality/dataManagement.js');
 
 const DownloadingData = ({ data1, data2, data3 }) => {
   return (
-    <div className="Data2">
-      <div className="Space"></div>
+      <div>
+        <div className="info-button">
+        <Popup
+          content="You can download data here."
+          trigger={
+            <div className="ui icon button">
+              <i className="info icon"></i>
+            </div>
+          }
+        />
+      </div>
       <Button
         className="FunctionalButton"
         onClick={() => dataManagement.copyDataToTxt(data1)}
       >
         Download resampled data in .txt
       </Button>
+      <div className="Space"></div>
       <Button
         className="FunctionalButton"
         onClick={() => dataManagement.copyDataToTxt(data2)}
       >
         Download original data in .txt
       </Button>
+      <div className="Space"></div>
       <Button
         className="FunctionalButton"
         onClick={() => dataManagement.copyDataToTxt(data3)}
@@ -38,6 +49,7 @@ const DownloadingData = ({ data1, data2, data3 }) => {
       >
         Copy resampled data to clipboard
       </Button>
+      <div className="Space"></div>
       <Button
         className="FunctionalButton"
         onClick={() =>
@@ -46,6 +58,7 @@ const DownloadingData = ({ data1, data2, data3 }) => {
       >
         Copy original data to clipboard
       </Button>
+      <div className="Space"></div>
       <Button
         className="FunctionalButton"
         onClick={() =>
@@ -54,7 +67,7 @@ const DownloadingData = ({ data1, data2, data3 }) => {
       >
         Copy filtered data to clipboard
       </Button>
-    </div>
+      </div>
   );
 };
 
