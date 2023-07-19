@@ -123,3 +123,8 @@
   right: 0;
   margin-right: 5%;
 }
+
+.ToggleMenuButton {
+  position: absolute;
+  top: 10px;
+}
