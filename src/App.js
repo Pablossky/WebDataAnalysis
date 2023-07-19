@@ -43,7 +43,11 @@ function App() {
   const [activeBookmark, setActiveBookmark] = useState('filter');
   const [highestDerivativeLine, setHighestDerivativeLine] = useState(null);
   const [nextPoint, setNextPoint] = useState(null);
+  const [showMenu, setShowMenu] = useState(true);
 
+  const handleToggleMenu = () => {
+    setShowMenu(!showMenu);
+  };
 
   const handleInterpolationOffsetChange = (event, value) => {
     setInterpolationOffset(value);
@@ -345,7 +349,7 @@ function App() {
 
   return (
     <div className="App">
-      <div className="ChartPlotter">
+      <div className="ChartPlotter" style={{ width: showMenu ? '55%' : '98%' }}>
         <div>
           <Chart
             data={[
@@ -359,44 +363,45 @@ function App() {
         </div>
       </div>
 
-      <div className="OptionsPanel">
-  <div className="ui fluid vertical pointing menu">
-    <Button
-      className={`Bookmark ${activeBookmark === 'input' ? 'active' : ''}`}
-      onClick={() => handleBookmarkClick('input')}
-      primary={activeBookmark === 'input'}
-    >
-      Input Options
-    </Button>
-    <Button
-      className={`Bookmark ${activeBookmark === 'filter' ? 'active' : ''}`}
-      onClick={() => handleBookmarkClick('filter')}
-      primary={activeBookmark === 'filter'}
-    >
-      Filter Options
-    </Button>
-    <Button
-      className={`Bookmark ${activeBookmark === 'interpolation' ? 'active' : ''}`}
-      onClick={() => handleBookmarkClick('interpolation')}
-      primary={activeBookmark === 'interpolation'}
-    >
-      Interpolation Options
-    </Button>
-    <Button
-      className={`Bookmark ${activeBookmark === 'data' ? 'active' : ''}`}
-      onClick={() => handleBookmarkClick('data')}
-      primary={activeBookmark === 'data'}
-    >
-      Data Tables
-    </Button>
-    <Button
-      className={`Bookmark ${activeBookmark === 'downloading' ? 'active' : ''}`}
-      onClick={() => handleBookmarkClick('downloading')}
-      primary={activeBookmark === 'downloading'}
-    >
-      Downloading Data
-    </Button>
-  </div>
+      {showMenu && (
+        <div className="OptionsPanel">
+          <div className="ui fluid vertical pointing menu">
+          <Button
+            className={`Bookmark ${activeBookmark === 'input' ? 'active' : ''}`}
+            onClick={() => handleBookmarkClick('input')}
+            primary={activeBookmark === 'input'}
+          >
+            Input Options
+          </Button>
+          <Button
+            className={`Bookmark ${activeBookmark === 'filter' ? 'active' : ''}`}
+            onClick={() => handleBookmarkClick('filter')}
+            primary={activeBookmark === 'filter'}
+          >
+            Filter Options
+          </Button>
+          <Button
+            className={`Bookmark ${activeBookmark === 'interpolation' ? 'active' : ''}`}
+            onClick={() => handleBookmarkClick('interpolation')}
+            primary={activeBookmark === 'interpolation'}
+          >
+            Interpolation Options
+          </Button>
+          <Button
+            className={`Bookmark ${activeBookmark === 'data' ? 'active' : ''}`}
+            onClick={() => handleBookmarkClick('data')}
+            primary={activeBookmark === 'data'}
+          >
+            Data Tables
+          </Button>
+          <Button
+            className={`Bookmark ${activeBookmark === 'downloading' ? 'active' : ''}`}
+            onClick={() => handleBookmarkClick('downloading')}
+            primary={activeBookmark === 'downloading'}
+          >
+            Downloading Data
+          </Button>
+        </div>
 
         {activeBookmark === 'input' && (
           <div className="InputData">
@@ -543,7 +548,7 @@ function App() {
                 }
               />
             </div>
-            
+
             <div className="Space"></div>
             <div className="Container">
               <DataBox
@@ -565,14 +570,22 @@ function App() {
 
         {activeBookmark === 'downloading' && (
           <div className="Downloading">
-              <DownloadingData
-                data1={resampledChartData}
-                data2={chartData}
-                data3={filteredChartData}
-              />
+            <DownloadingData
+              data1={resampledChartData}
+              data2={chartData}
+              data3={filteredChartData}
+            />
           </div>
         )}
       </div>
+      )}
+
+      <Button
+        className="ToggleMenuButton"
+        onClick={handleToggleMenu}
+        icon={showMenu ? 'expand' : 'align justify'}
+        size="large"
+      />
     </div>
   );
 }
