@@ -1,3 +1,7 @@
+import akimaInterpolate from './akimaInterpolation';
+
+
+
 const numeric = require('numeric');
 
 function interpolateArray(x, y, numValues, method, offset) {
@@ -16,12 +20,16 @@ function interpolateArray(x, y, numValues, method, offset) {
         interpolatedX.push(interpolatedXValue);
         interpolatedY.push(interpolatedYValue);
       }
-    } else if (method === 'akima') {
-      const interpolator = numeric.spline(x, y, 'akima');
+    } else if (method === 'cubic') {
+      const interpolator = numeric.spline(x, y, 'cubic');
 
       interpolatedX = numeric.linspace(x[0], x[x.length - 1], numValues);
       interpolatedY = interpolatedX.map((value) => interpolator.at(value));
+
+    } else if (method === 'akima') {
+      return akimaInterpolate(x, y, numValues, offset);
     }
+    
 
     return { x: interpolatedX, y: interpolatedY };
   }

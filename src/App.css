@@ -31,17 +31,16 @@
 
 .OptionsPanel {
   position: absolute;
-  margin-top: 1%;
   right: 0;
-  margin-right: 1%;
+  margin: 20px;
   width: 1000px;
-  height: 96%;
+  height: 98%;
   background-color: #f1f1f1;
 }
 
 .ChartPlotter {
   position: absolute;
-  padding-left: 1%;
+  margin-left: 20px;
   padding-top: 15%;
   width: 55%;
 }
@@ -126,5 +125,5 @@
 
 .ToggleMenuButton {
   position: absolute;
-  top: 10px;
+  top: 20px;
 }

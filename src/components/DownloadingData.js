@@ -12,7 +12,7 @@ const DownloadingData = ({ data1, data2, data3 }) => {
       <div>
         <div className="info-button">
         <Popup
-          content="You can download data here."
+          content="You can download data from here."
           trigger={
             <div className="ui icon button">
               <i className="info icon"></i>
