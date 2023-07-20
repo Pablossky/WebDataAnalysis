@@ -8,12 +8,12 @@ import { renderData, renderFilteredData, renderGeneratedArray } from "./function
 import 'semantic-ui-css/semantic.min.css';
 import 'toolcool-range-slider';
 import applyLowpassFilter from './functionality/lowpassFilter.js';
-import interpolateArray from './functionality/interpolateArray.js';
 import SliderInput from './components/SliderInput';
 import DataBox from './components/DataBox';
 import LowpassFilter from './components/LowpassFilter';
 import DownloadingData from './components/DownloadingData';
 import akimaInterpolate from './functionality/akimaInterpolation.js';
+import { interpolateArray } from "./functionality/interpolateArray.js";
 
 function App() {
   const XLSX = require('xlsx');
@@ -45,6 +45,8 @@ function App() {
   const [highestDerivativeLine, setHighestDerivativeLine] = useState(null);
   const [nextPoint, setNextPoint] = useState(null);
   const [showMenu, setShowMenu] = useState(true);
+  const [sampleOriginalData, setSampleOriginalData] = useState(10);
+  const [resampleOriginalData, setResampleOriginalData] = useState(true);
 
   const handleToggleMenu = () => {
     setShowMenu(!showMenu);
@@ -93,13 +95,118 @@ function App() {
     handleInterpolation();
   };
 
-  useEffect(() => {
-    handleInterpolation();
-  }, [lowpassFilterEnabled, chartData, interpolationOffset]);
+  const handleSampleOriginalDataChange = (event, value) => {
+    setSampleOriginalData(value);
+  
+    // If resampleOriginalData is true, perform the resampling process
+    if (resampleOriginalData) {
+      const x = originalChartData.x;
+      const y = originalChartData.y;
+  
+      const numValues = Math.round(value);
+      const resamplingFactor = (x.length - 1) / (numValues - 1);
+      const resampledX = [];
+      const resampledY = [];
+  
+      for (let i = 0; i < numValues; i++) {
+        const index = Math.floor(i * resamplingFactor);
+        const remainder = i * resamplingFactor - index;
+  
+        if (remainder === 0) {
+          resampledX.push(x[index]);
+          resampledY.push(y[index]);
+        } else {
+          const interpolatedX = x[index] + remainder * (x[index + 1] - x[index]);
+          const interpolatedY = y[index] + remainder * (y[index + 1] - y[index]);
+          resampledX.push(interpolatedX);
+          resampledY.push(interpolatedY);
+        }
+      }
+  
+      const resampledChartData = {
+        name: 'Resampling',
+        x: resampledX,
+        y: resampledY,
+      };
+  
+      setResampledChartData(resampledChartData);
+  
+      // If resampleOriginalData is false, update the interpolatedChartData as well
+      if (!resampleOriginalData) {
+        const interpolatedData = {
+          name: 'Interpolated',
+          x: resampledX,
+          y: resampledY,
+        };
+        setInterpolatedChartData(interpolatedData);
+      }
+    } else {
+      // If resampleOriginalData is false, perform the interpolation on the original data
+      const x = originalChartData.x;
+      const y = originalChartData.y;
+    
+      const numValues = Math.round(value);
+      const startIndex = Math.round(interpolationOffset * (x.length - numValues));
+    
+      const slicedX = x.slice(startIndex, startIndex + numValues);
+      const slicedY = y.slice(startIndex, startIndex + numValues);
+    
+      let interpolatedX, interpolatedY;
+    
+      if (selectedInterpolation === 'akima') {
+        const { x: akimaInterpolatedX, y: akimaInterpolatedY } = akimaInterpolate(
+          slicedX,
+          slicedY,
+          numValues,
+          offset
+        );
+    
+        interpolatedX = akimaInterpolatedX;
+        interpolatedY = akimaInterpolatedY;
+      } else {
+        const { x: otherInterpolatedX, y: otherInterpolatedY } = interpolateArray(
+          slicedX,
+          slicedY,
+          numValues,
+          selectedInterpolation
+        );
+    
+        interpolatedX = otherInterpolatedX;
+        interpolatedY = otherInterpolatedY;
+      }
+    
+      const interpolatedData = {
+        name: 'Interpolated',
+        x: interpolatedX,
+        y: interpolatedY,
+      };
+    
+      setInterpolatedChartData(interpolatedData);
+    
+      // Select and display the area on the chart
+      handleSelectArea(startIndex, startIndex + numValues);
+    }
+  };
+
+  
+  const filteredChartData = lowpassFilterEnabled
+  ? {
+      ...resampledChartData, // Use resampledChartData when lowpassFilterEnabled is true
+      name: 'Lowpass filter',
+      y: applyLowpassFilter(
+        resampleOriginalData ? resampledChartData.y : originalChartData.y, // Use resampled data if resampleOriginalData is true
+        cutoffFrequency,
+        sampleRate
+      ),
+    }
+  : chartData;
+
 
   useEffect(() => {
     handleInterpolation();
-  }, [lowpassFilterEnabled, chartData]);
+  }, [lowpassFilterEnabled, selectedSource, filteredChartData, interpolationOffset, selectedInterpolation]);
+
+  
 
   const handleCutoffFrequency = (event, value) => {
     setCutoffFrequency(value);
@@ -114,7 +221,8 @@ function App() {
   };
 
   const handleInterpolation = () => {
-    const { x, y } = chartData;
+    const { x, y } = filteredChartData; // Use filteredChartData for interpolation
+  
     const numValues = Math.round(sliderValue);
     const startIndex = Math.round(interpolationOffset * (x.length - numValues));
   
@@ -156,78 +264,106 @@ function App() {
     // Select and display the area on the chart
     handleSelectArea(startIndex, startIndex + numValues);
   };
-
+  
   const handleSliderChange = (event, value) => {
     setSliderValue(value);
     const numValues = Math.round(value);
     setSampleCount(numValues);
 
-    let resampledX, resampledY;
-
-    if (selectedInterpolation === 'linear') {
-      const resamplingFactor = (filteredChartData.x.length - 1) / (numValues - 1);
-      resampledX = [];
-      resampledY = [];
-
-      for (let i = 0; i < numValues; i++) {
-        const index = Math.floor(i * resamplingFactor);
-        const remainder = i * resamplingFactor - index;
-
-        if (remainder === 0) {
-          resampledX.push(filteredChartData.x[index]);
-          resampledY.push(filteredChartData.y[index]);
-        } else {
-          const interpolatedX = filteredChartData.x[index] + remainder * (filteredChartData.x[index + 1] - filteredChartData.x[index]);
-          const interpolatedY = filteredChartData.y[index] + remainder * (filteredChartData.y[index + 1] - filteredChartData.y[index]);
-          resampledX.push(interpolatedX);
-          resampledY.push(interpolatedY);
-        }
-      }
-    } else if (selectedInterpolation === 'cubic') {
-      const { x: interpolatedX, y: interpolatedY } = interpolateArray(
-        filteredChartData.x,
-        filteredChartData.y,
-        numValues,
-        'cubic'
-      );
-      resampledX = interpolatedX;
-      resampledY = interpolatedY;
-    } else if (selectedInterpolation === 'akima') {
+    // Check if the data source is set to "interpolated"
+    if (selectedSource === 'interpolated') {
+      // Interpolate the data using the new sample count
       const { x, y } = chartData;
       const startIndex = Math.round(interpolationOffset * (x.length - numValues));
-  
       const slicedX = x.slice(startIndex, startIndex + numValues);
       const slicedY = y.slice(startIndex, startIndex + numValues);
-  
-      const { x: interpolatedX, y: interpolatedY } = akimaInterpolate(
+
+      const { x: interpolatedX, y: interpolatedY } = interpolateArray(
         slicedX,
         slicedY,
         numValues,
+        selectedInterpolation,
         offset
       );
-  
-      resampledX = interpolatedX;
-      resampledY = interpolatedY;
-  
+
+      // Update the "Interpolated" data with the new interpolated values
       const interpolatedData = {
         name: 'Interpolated',
         x: interpolatedX,
         y: interpolatedY,
       };
       setInterpolatedChartData(interpolatedData);
-  
-      handleSelectArea(startIndex, startIndex + numValues);
-    }
-  
-    const resampledChartData = {
-      name: 'Resampling',
-      x: resampledX,
-      y: resampledY,
-    };
-  
-    setResampledChartData(resampledChartData);
-  };
 
+      // Select and display the area on the chart
+      handleSelectArea(startIndex, startIndex + numValues);
+    } else {
+      // For other data sources, apply the resampling process
+  
+      let resampledX, resampledY;
+  
+      if (selectedInterpolation === 'linear') {
+        // Resample using linear interpolation
+        const resamplingFactor = (filteredChartData.x.length - 1) / (numValues - 1);
+        resampledX = [];
+        resampledY = [];
+  
+        for (let i = 0; i < numValues; i++) {
+          const index = Math.floor(i * resamplingFactor);
+          const remainder = i * resamplingFactor - index;
+  
+          if (remainder === 0) {
+            resampledX.push(filteredChartData.x[index]);
+            resampledY.push(filteredChartData.y[index]);
+          } else {
+            const interpolatedX = filteredChartData.x[index] + remainder * (filteredChartData.x[index + 1] - filteredChartData.x[index]);
+            const interpolatedY = filteredChartData.y[index] + remainder * (filteredChartData.y[index + 1] - filteredChartData.y[index]);
+            resampledX.push(interpolatedX);
+            resampledY.push(interpolatedY);
+          }
+        }
+      } else if (selectedInterpolation === 'cubic') {
+        // Resample using cubic interpolation
+        const { x: interpolatedX, y: interpolatedY } = interpolateArray(
+          filteredChartData.x,
+          filteredChartData.y,
+          numValues,
+          'cubic'
+        );
+        resampledX = interpolatedX;
+        resampledY = interpolatedY;
+      } else if (selectedInterpolation === 'akima') {
+        // Resample using Akima interpolation
+        const { x, y } = chartData;
+        const startIndex = Math.round(interpolationOffset * (x.length - numValues));
+    
+        const slicedX = x.slice(startIndex, startIndex + numValues);
+        const slicedY = y.slice(startIndex, startIndex + numValues);
+    
+        const { x: interpolatedX, y: interpolatedY } = akimaInterpolate(
+          slicedX,
+          slicedY,
+          numValues,
+          offset
+        );
+    
+        resampledX = interpolatedX;
+        resampledY = interpolatedY;
+    
+        const interpolatedData = {
+          name: 'Interpolated',
+          x: interpolatedX,
+          y: interpolatedY,
+        };
+        setInterpolatedChartData(interpolatedData);
+    
+        handleSelectArea(startIndex, startIndex + numValues);
+      }
+    
+    }
+  };
+  
+
+      
   const handleOffsetSliderChange = (event, value) => {
     setOffset(value);
 
@@ -308,13 +444,7 @@ function App() {
   };
 
 
-  const filteredChartData = lowpassFilterEnabled
-    ? {
-      ...chartData,
-      name: 'Lowpass filter',
-      y: applyLowpassFilter(originalChartData.y, cutoffFrequency, sampleRate),
-    }
-    : chartData;
+
 
   const handleSelectArea = (startIndex, endIndex) => {
     const { x, y } = chartData;
@@ -395,7 +525,7 @@ function App() {
           <Chart
             data={[
               filteredChartData,
-              resampledChartData,
+              resampleOriginalData ?  resampledChartData : {},
               offsettedChartData,
               interpolatedChartData,
               showSelectedArea ? selectedArea : {},
@@ -475,6 +605,26 @@ function App() {
                 />
               </div>
               <div className="Space"></div>
+
+              <div className="ResampleCheckbox">
+                <input
+                  type="checkbox"
+                  checked={resampleOriginalData}
+                  onChange={() => setResampleOriginalData(!resampleOriginalData)}
+                />
+                Resample Original Data
+              </div>
+
+              <div className="interpolation-slider-container">
+                <SliderInput
+                  value={sampleOriginalData}
+                  min={2}
+                  max={10 * chartData.x.length}
+                  step={1}
+                  onChange={handleSampleOriginalDataChange}
+                  name={'Sample Original Data'}
+                />
+              </div>
 
             </div>
           )}

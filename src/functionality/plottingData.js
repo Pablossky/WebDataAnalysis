@@ -1,15 +1,8 @@
-function ResampledTable({ array1, array2, sampleCount }) {
-    const resamplingFactor = array1.length / sampleCount;
-    const resampledArray1 = [];
-    const resampledArray2 = [];
+import React from 'react';
 
-    for (let i = 0; i < sampleCount; i++) {
-      const index = Math.round(i * resamplingFactor);
-      resampledArray1.push(array1[index].toFixed(3));
-      resampledArray2.push(array2[index].toFixed(3));
-    }
-
-    return (
+const ResampledTable = ({ array1, array2, sampleCount }) => {
+  return (
+    <div>
       <table className="table">
         <thead>
           <tr>
@@ -18,15 +11,16 @@ function ResampledTable({ array1, array2, sampleCount }) {
           </tr>
         </thead>
         <tbody>
-          {resampledArray1.map((value, index) => (
+          {array1.map((xValue, index) => (
             <tr key={index}>
-              <td>{value}</td>
-              <td>{resampledArray2[index]}</td>
+              <td>{xValue.toFixed(3)}</td>
+              <td>{array2[index].toFixed(3)}</td>
             </tr>
           ))}
         </tbody>
       </table>
-    );
-  }
+    </div>
+  );
+};
 
 export default ResampledTable;

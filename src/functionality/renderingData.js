@@ -102,14 +102,15 @@ const renderFilteredData = (filteredChartData) => {
 };
 
 const renderGeneratedArray = (resampledChartData, offset, sampleCount) => {
-    const array1 = resampledChartData.x.slice(offset, Math.min(offset + sampleCount));
-    const array2 = resampledChartData.y.slice(offset, Math.min(offset + sampleCount));
+  const array1 = resampledChartData.x.slice(offset, Math.min(offset + sampleCount));
+  const array2 = resampledChartData.y.slice(offset, Math.min(offset + sampleCount));
 
-    return (
-      <div>
-        <ResampledTable array1={array1} array2={array2} sampleCount={sampleCount} />
-      </div>
-    );
+  return (
+    <div>
+      <ResampledTable array1={array1} array2={array2} sampleCount={sampleCount} />
+    </div>
+  );
 };
+
 
 export { renderData, renderFilteredData, renderGeneratedArray }
