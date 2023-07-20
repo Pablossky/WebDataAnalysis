@@ -27,11 +27,14 @@ function interpolateArray(x, y, numValues, method, offset) {
       interpolatedY = interpolatedX.map((value) => interpolator.at(value));
 
     } else if (method === 'akima') {
-      return akimaInterpolate(x, y, numValues, offset);
+      const interpolatedData = akimaInterpolate(x, y, numValues, offset);
+      interpolatedX = interpolatedData.x;
+      interpolatedY = interpolatedData.y;
+    } else {
+      throw new Error(`Invalid interpolation method: ${method}`);
     }
-    
-
+  
     return { x: interpolatedX, y: interpolatedY };
   }
-
+  
   export default interpolateArray;

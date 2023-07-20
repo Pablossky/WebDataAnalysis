@@ -97,10 +97,6 @@ function App() {
     handleInterpolation();
   }, [lowpassFilterEnabled, chartData, interpolationOffset]);
 
-  useEffect(() => {
-    handleInterpolation();
-  }, [lowpassFilterEnabled, chartData]);
-
   const handleCutoffFrequency = (event, value) => {
     setCutoffFrequency(value);
   };
@@ -117,22 +113,22 @@ function App() {
     const { x, y } = chartData;
     const numValues = Math.round(sliderValue);
     const startIndex = Math.round(interpolationOffset * (x.length - numValues));
-  
     const slicedX = x.slice(startIndex, startIndex + numValues);
     const slicedY = y.slice(startIndex, startIndex + numValues);
   
     let interpolatedX, interpolatedY;
   
     if (selectedInterpolation === 'akima') {
-      const { x: akimaInterpolatedX, y: akimaInterpolatedY } = akimaInterpolate(
-        slicedX,
-        slicedY,
+      const interpolatedData = interpolateArray(
+        interpolatedChartData.x,
+        interpolatedChartData.y,
         numValues,
+        'akima',
         offset
       );
   
-      interpolatedX = akimaInterpolatedX;
-      interpolatedY = akimaInterpolatedY;
+      interpolatedX = interpolatedData.x.slice(0, numValues);
+      interpolatedY = interpolatedData.y.slice(0, numValues);
     } else {
       const { x: otherInterpolatedX, y: otherInterpolatedY } = interpolateArray(
         slicedX,
@@ -152,10 +148,9 @@ function App() {
     };
   
     setInterpolatedChartData(interpolatedData);
-  
-    // Select and display the area on the chart
     handleSelectArea(startIndex, startIndex + numValues);
-  };
+  }
+  
 
   const handleSliderChange = (event, value) => {
     setSliderValue(value);
@@ -316,77 +311,76 @@ function App() {
     }
     : chartData;
 
-  const handleSelectArea = (startIndex, endIndex) => {
-    const { x, y } = chartData;
-
-    const selectedX = x.slice(startIndex, endIndex);
-    const selectedY = y.slice(startIndex, endIndex);
-
-    const selectedChartData = {
-      name: 'Selected Area',
-      x: selectedX,
-      y: selectedY,
-    };
-
-    let areaData = selectedChartData;
-
-    if (selectedSource !== 'interpolated') {
-      const derivative = calculateDerivative(selectedY);
-
-      // Find the index of the highest income (maximum derivative value)
-      const maxDerivativeIndex = derivative.indexOf(Math.max(...derivative));
-
-      const start = startIndex + maxDerivativeIndex;
-      const end = startIndex + maxDerivativeIndex + 1;
-
-      const highestIncomeX = x.slice(start, end);
-      const highestIncomeY = y.slice(start, end);
-
-      const highestIncomeArea = {
-        name: 'Highest Income Area',
-        x: highestIncomeX,
-        y: highestIncomeY,
+    const handleSelectArea = (startIndex, endIndex) => {
+      const { x, y } = chartData;
+    
+      const selectedX = x.slice(startIndex, endIndex);
+      const selectedY = y.slice(startIndex, endIndex);
+    
+      const selectedChartData = {
+        name: 'Selected Area',
+        x: selectedX,
+        y: selectedY,
       };
-
-      areaData = highestIncomeArea;
-
-      const nextPointIndex = start + 1;
-      if (nextPointIndex < x.length) {
-        const highestDerivativeLineData = {
-          datasets: [{
-            label: 'Highest Derivative Line',
-            data: [
-              { x: highestIncomeX[0], y: highestIncomeY[0] },
-              { x: x[nextPointIndex], y: y[nextPointIndex] },
-            ],
-            fill: false,
-            borderColor: 'red',
-            borderWidth: 2,
-            borderDash: [5, 5],
-          }],
+    
+      let areaData = selectedChartData;
+    
+      if (selectedSource !== 'interpolated') {
+        const derivative = calculateDerivative(selectedY);
+    
+        const maxDerivativeIndex = derivative.indexOf(Math.max(...derivative));
+    
+        const start = startIndex + maxDerivativeIndex;
+        const end = startIndex + maxDerivativeIndex + 1;
+    
+        const highestIncomeX = x.slice(start, end);
+        const highestIncomeY = y.slice(start, end);
+    
+        const highestIncomeArea = {
+          name: 'Highest Derivative',
+          x: highestIncomeX,
+          y: highestIncomeY,
         };
-        setHighestDerivativeLine(highestDerivativeLineData);
-
-        // Calculate point data
-        const nextPointData = {
-          datasets: [{
-            label: 'Next Point',
-            data: [{ x: x[nextPointIndex], y: y[nextPointIndex] }],
-            backgroundColor: 'red',
-            borderColor: 'red',
-            pointRadius: 5,
-            pointHoverRadius: 7,
-          }],
-        };
-        setNextPoint(nextPointData);
-      } else {
-        setHighestDerivativeLine(null);
-        setNextPoint(null);
+    
+        areaData = highestIncomeArea;
+    
+        const nextPointIndex = start + 1;
+        if (nextPointIndex < x.length) {
+          const highestDerivativeLineData = {
+            datasets: [{
+              label: 'Highest Derivative Line',
+              data: [
+                { x: highestIncomeX[0], y: highestIncomeY[0] },
+                { x: x[nextPointIndex], y: y[nextPointIndex] },
+              ],
+              fill: false,
+              borderColor: 'red',
+              borderWidth: 2,
+              borderDash: [5, 5],
+            }],
+          };
+          setHighestDerivativeLine(highestDerivativeLineData);
+    
+          const nextPointData = {
+            datasets: [{
+              label: 'Next Point',
+              data: [{ x: x[nextPointIndex], y: y[nextPointIndex] }],
+              backgroundColor: 'red',
+              borderColor: 'red',
+              pointRadius: 5,
+              pointHoverRadius: 7,
+            }],
+          };
+          setNextPoint(nextPointData);
+        } else {
+          setHighestDerivativeLine(null);
+          setNextPoint(null);
+        }
       }
-    }
-
-    setSelectedArea(showSelectedArea ? areaData : {});
-  };
+    
+      setSelectedArea(showSelectedArea ? areaData : {});
+    };
+    
 
   return (
     <div className="App">
@@ -604,7 +598,6 @@ function App() {
                   value={renderFilteredData(filteredChartData)}
                   name={'Filtered'}
                 />
-
               </div>
             </div>
           )}
