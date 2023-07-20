@@ -1,50 +1,88 @@
+// ----------------------------------------IMPORTS---------------------------------------------
+// Overall
+import 'toolcool-range-slider';
+import 'semantic-ui-css/semantic.min.css';
 import React, { useState, useEffect } from 'react';
 import { Dropdown, Popup, Input, Button } from 'semantic-ui-react';
-import Chart from "./components/mychart.js";
+
+// Functionality
+import akimaInterpolate from './functionality/akimaInterpolation.js';
+import applyLowpassFilter from './functionality/lowpassFilter.js';
+import interpolateArray from './functionality/interpolateArray.js';
 import "./functionality/dataManagement.js";
 import "./functionality/plottingData.js";
 import { calculateDerivative } from './functionality/calculateDerivative.js';
 import { renderData, renderFilteredData, renderGeneratedArray } from "./functionality/renderingData.js";
-import 'semantic-ui-css/semantic.min.css';
-import 'toolcool-range-slider';
-import applyLowpassFilter from './functionality/lowpassFilter.js';
-import interpolateArray from './functionality/interpolateArray.js';
+
+// Components
 import SliderInput from './components/SliderInput';
 import DataBox from './components/DataBox';
 import LowpassFilter from './components/LowpassFilter';
 import DownloadingData from './components/DownloadingData';
-import akimaInterpolate from './functionality/akimaInterpolation.js';
+import Chart from "./components/mychart.js";
+
+// useStates
+import {
+  useSliderValue,
+  useSampleCount,
+  useSelectedSource,
+  useOffset,
+  useInterpolationOffset,
+  useLowpassEnabled,
+  usePrintSelectedArea,
+  useCutoffFrequency,
+  useSampleRate,
+  useOriginalChartData,
+  useChartData,
+  useResampledChartData,
+  useSelectedInterpolation,
+  useOffsettedChartData,
+  useInterpolatedChartData,
+  useInterpolatedData,
+  useShowSelectedArea,
+  useActiveBookmark,
+  useHighestDerivativeLine,
+  useNextPoint,
+  useShowMenu,
+  useSelectedArea,
+} from './hooks/useStates.js';
+
+// ------------------------------------------CODE-----------------------------------------------
 
 function App() {
+
+   // Replace the previous useState declarations with the respective custom hooks
+   const { sliderValue, setSliderValue } = useSliderValue(5);
+   const { sampleCount, setSampleCount } = useSampleCount(5);
+   const { selectedInterpolation, setSelectedInterpolation } = useSelectedInterpolation('linear');
+   const { selectedSource, setSelectedSource } = useSelectedSource('dataFile');
+   const { offset, setOffset } = useOffset(0);
+   const { interpolationOffset, setInterpolationOffset } = useInterpolationOffset(0);
+   const { lowpassFilterEnabled, setLowpassEnabled } = useLowpassEnabled(false);
+   const { printSelectedArea, setPrintSelectedArea } = usePrintSelectedArea(false);
+   const { cutoffFrequency, setCutoffFrequency } = useCutoffFrequency(1000);
+   const { sampleRate, setSampleRate } = useSampleRate(1000);
+   const { originalChartData, setOriginalChartData } = useOriginalChartData({
+     name: 'default',
+     x: [1, 2, 3, 4],
+     y: [1, 2, 1, 2]
+   });
+   const { chartData, setChartData } = useChartData(originalChartData);
+   const { resampledChartData, setResampledChartData } = useResampledChartData(originalChartData);
+   const { offsettedChartData, setOffsettedChartData } = useOffsettedChartData({
+     name: 'offsetted',
+     x: [],
+     y: []
+   });
+   const { showSelectedArea, setShowSelectedArea } = useShowSelectedArea(false);
+   const { activeBookmark, setActiveBookmark } = useActiveBookmark('input');
+   const { highestDerivativeLine, setHighestDerivativeLine } = useHighestDerivativeLine(null);
+   const { nextPoint, setNextPoint } = useNextPoint(null);
+   const { showMenu, setShowMenu } = useShowMenu(true);
+   const { selectedArea, setSelectedArea } = useSelectedArea({});
+
+
   const XLSX = require('xlsx');
-  const [sliderValue, setSliderValue] = useState(5);
-  const [sampleCount, setSampleCount] = useState(5);
-  const [selectedSource, setSelectedSource] = useState('dataFile');
-  const [selectedInterpolation, setSelectedInterpolation] = useState('linear');
-  const [offset, setOffset] = useState(0);
-  const [interpolationOffset, setInterpolationOffset] = useState(0);
-  const [lowpassFilterEnabled, setLowpassEnabled] = useState(false);
-  const [printSelectedArea, setPrintSelectedArea] = useState(false);
-  const [showSelectedArea, setShowSelectedArea] = useState(false);
-  const [cutoffFrequency, setCutoffFrequency] = useState(1000);
-  const [sampleRate, setSampleRate] = useState(1000);
-  const [originalChartData, setOriginalChartData] = useState({
-    name: 'default',
-    x: [1, 2, 3, 4],
-    y: [1, 2, 1, 2]
-  });
-  const [chartData, setChartData] = useState(originalChartData);
-  const [resampledChartData, setResampledChartData] = useState(originalChartData);
-  const [offsettedChartData, setOffsettedChartData] = useState({
-    name: 'offsetted',
-    x: [],
-    y: []
-  });
-  const [selectedArea, setSelectedArea] = useState({});
-  const [activeBookmark, setActiveBookmark] = useState('filter');
-  const [highestDerivativeLine, setHighestDerivativeLine] = useState(null);
-  const [nextPoint, setNextPoint] = useState(null);
-  const [showMenu, setShowMenu] = useState(true);
 
   const handleToggleMenu = () => {
     setShowMenu(!showMenu);
@@ -97,6 +135,10 @@ function App() {
     handleInterpolation();
   }, [lowpassFilterEnabled, chartData, interpolationOffset]);
 
+  useEffect(() => {
+    handleInterpolation();
+  }, [lowpassFilterEnabled, chartData]);
+
   const handleCutoffFrequency = (event, value) => {
     setCutoffFrequency(value);
   };
@@ -109,26 +151,30 @@ function App() {
     setActiveBookmark(bookmark);
   };
 
+  const [interpolatedData, setInterpolatedData] = useState({
+    name: 'Interpolated',
+    x: [],
+    y: [],
+  });
+  
   const handleInterpolation = () => {
-    const { x, y } = chartData;
+    const { x, y } = filteredChartData;
     const numValues = Math.round(sliderValue);
-    const startIndex = Math.round(interpolationOffset * (x.length - numValues));
-    const slicedX = x.slice(startIndex, startIndex + numValues);
-    const slicedY = y.slice(startIndex, startIndex + numValues);
-
+  
+    const slicedX = x.slice(offset, Math.min(offset + numValues, x.length));
+    const slicedY = y.slice(offset, Math.min(offset + numValues, y.length));
+  
     let interpolatedX, interpolatedY;
-
+  
     if (selectedInterpolation === 'akima') {
-      const interpolatedData = interpolateArray(
-        interpolatedChartData.x,
-        interpolatedChartData.y,
-        numValues,
-        'akima',
-        offset
+      const { x: akimaInterpolatedX, y: akimaInterpolatedY } = akimaInterpolate(
+        x,
+        y,
+        resampledChartData.x // Use resampledChartData.x instead of numValues
       );
-
-      interpolatedX = interpolatedData.x.slice(0, numValues);
-      interpolatedY = interpolatedData.y.slice(0, numValues);
+  
+      interpolatedX = akimaInterpolatedX.slice(0, numValues);
+      interpolatedY = akimaInterpolatedY.slice(0, numValues);
     } else {
       const { x: otherInterpolatedX, y: otherInterpolatedY } = interpolateArray(
         slicedX,
@@ -136,20 +182,23 @@ function App() {
         numValues,
         selectedInterpolation
       );
-
+  
       interpolatedX = otherInterpolatedX;
       interpolatedY = otherInterpolatedY;
     }
-
+  
     const interpolatedData = {
       name: 'Interpolated',
       x: interpolatedX,
       y: interpolatedY,
     };
-
+  
     setInterpolatedChartData(interpolatedData);
-    handleSelectArea(startIndex, startIndex + numValues);
-  }
+  
+    // Select and display the area on the chart
+    handleSelectArea(offset, offset + numValues);
+  };
+  
 
   const handleSliderChange = (event, value) => {
     setSliderValue(value);
@@ -187,24 +236,14 @@ function App() {
       resampledX = interpolatedX;
       resampledY = interpolatedY;
     } else if (selectedInterpolation === 'akima') {
-      const { x: interpolatedX, y: interpolatedY } = interpolateArray(
+      const { x: akimaInterpolatedX, y: akimaInterpolatedY } = akimaInterpolate(
         filteredChartData.x,
         filteredChartData.y,
-        numValues,
-        'akima'
+        resampledChartData.x // Use resampledChartData.x instead of numValues
       );
 
-      resampledX = interpolatedX;
-      resampledY = interpolatedY;
-
-      const interpolatedData = {
-        name: 'Interpolated',
-        x: interpolatedX,
-        y: interpolatedY,
-      };
-      setInterpolatedChartData(interpolatedData);
-
-      //handleSelectArea(startIndex, startIndex + numValues);
+      resampledX = akimaInterpolatedX;
+      resampledY = akimaInterpolatedY;
     }
 
     const resampledChartData = {
@@ -215,6 +254,7 @@ function App() {
 
     setResampledChartData(resampledChartData);
   };
+  
 
   const handleOffsetSliderChange = (event, value) => {
     setOffset(value);
@@ -591,6 +631,7 @@ function App() {
                   value={renderFilteredData(filteredChartData)}
                   name={'Filtered'}
                 />
+
               </div>
             </div>
           )}

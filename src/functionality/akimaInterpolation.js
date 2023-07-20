@@ -6,7 +6,6 @@ function akimaInterpolate(x, y, xDesired) {
     throw new Error("Invalid input data. The number of x and y values should be the same and at least 4.");
   }
 
-  // Calculate the slopes (t) at each data point using the Akima method
   const t = new Array(n);
   for (let i = 0; i < n; i++) {
     const dx = x[i + 1] - x[i];
@@ -14,8 +13,7 @@ function akimaInterpolate(x, y, xDesired) {
     t[i] = dy / dx;
   }
 
-  // Interpolate the desired y values using the Akima method
-  const interpolatedX = xDesired.slice(); // Create a copy of xDesired
+  const interpolatedX = xDesired.slice(); 
   const interpolatedY = [];
   for (let i = 0; i < xDesired.length; i++) {
     const xd = xDesired[i];
