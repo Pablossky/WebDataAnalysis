@@ -17,7 +17,7 @@ import akimaInterpolate from './functionality/akimaInterpolation.js';
 
 function App() {
   const XLSX = require('xlsx');
-  const [sliderValue, setSliderValue] = useState(2);
+  const [sliderValue, setSliderValue] = useState(5);
   const [sampleCount, setSampleCount] = useState(5);
   const [selectedSource, setSelectedSource] = useState('dataFile');
   const [selectedInterpolation, setSelectedInterpolation] = useState('linear');
@@ -115,9 +115,9 @@ function App() {
     const startIndex = Math.round(interpolationOffset * (x.length - numValues));
     const slicedX = x.slice(startIndex, startIndex + numValues);
     const slicedY = y.slice(startIndex, startIndex + numValues);
-  
+
     let interpolatedX, interpolatedY;
-  
+
     if (selectedInterpolation === 'akima') {
       const interpolatedData = interpolateArray(
         interpolatedChartData.x,
@@ -126,7 +126,7 @@ function App() {
         'akima',
         offset
       );
-  
+
       interpolatedX = interpolatedData.x.slice(0, numValues);
       interpolatedY = interpolatedData.y.slice(0, numValues);
     } else {
@@ -136,21 +136,20 @@ function App() {
         numValues,
         selectedInterpolation
       );
-  
+
       interpolatedX = otherInterpolatedX;
       interpolatedY = otherInterpolatedY;
     }
-  
+
     const interpolatedData = {
       name: 'Interpolated',
       x: interpolatedX,
       y: interpolatedY,
     };
-  
+
     setInterpolatedChartData(interpolatedData);
     handleSelectArea(startIndex, startIndex + numValues);
   }
-  
 
   const handleSliderChange = (event, value) => {
     setSliderValue(value);
@@ -190,36 +189,36 @@ function App() {
     } else if (selectedInterpolation === 'akima') {
       const { x, y } = chartData;
       const startIndex = Math.round(interpolationOffset * (x.length - numValues));
-  
+
       const slicedX = x.slice(startIndex, startIndex + numValues);
       const slicedY = y.slice(startIndex, startIndex + numValues);
-  
+
       const { x: interpolatedX, y: interpolatedY } = akimaInterpolate(
         slicedX,
         slicedY,
         numValues,
         offset
       );
-  
+
       resampledX = interpolatedX;
       resampledY = interpolatedY;
-  
+
       const interpolatedData = {
         name: 'Interpolated',
         x: interpolatedX,
         y: interpolatedY,
       };
       setInterpolatedChartData(interpolatedData);
-  
+
       handleSelectArea(startIndex, startIndex + numValues);
     }
-  
+
     const resampledChartData = {
       name: 'Resampling',
       x: resampledX,
       y: resampledY,
     };
-  
+
     setResampledChartData(resampledChartData);
   };
 
@@ -311,76 +310,76 @@ function App() {
     }
     : chartData;
 
-    const handleSelectArea = (startIndex, endIndex) => {
-      const { x, y } = chartData;
-    
-      const selectedX = x.slice(startIndex, endIndex);
-      const selectedY = y.slice(startIndex, endIndex);
-    
-      const selectedChartData = {
-        name: 'Selected Area',
-        x: selectedX,
-        y: selectedY,
-      };
-    
-      let areaData = selectedChartData;
-    
-      if (selectedSource !== 'interpolated') {
-        const derivative = calculateDerivative(selectedY);
-    
-        const maxDerivativeIndex = derivative.indexOf(Math.max(...derivative));
-    
-        const start = startIndex + maxDerivativeIndex;
-        const end = startIndex + maxDerivativeIndex + 1;
-    
-        const highestIncomeX = x.slice(start, end);
-        const highestIncomeY = y.slice(start, end);
-    
-        const highestIncomeArea = {
-          name: 'Highest Derivative',
-          x: highestIncomeX,
-          y: highestIncomeY,
-        };
-    
-        areaData = highestIncomeArea;
-    
-        const nextPointIndex = start + 1;
-        if (nextPointIndex < x.length) {
-          const highestDerivativeLineData = {
-            datasets: [{
-              label: 'Highest Derivative Line',
-              data: [
-                { x: highestIncomeX[0], y: highestIncomeY[0] },
-                { x: x[nextPointIndex], y: y[nextPointIndex] },
-              ],
-              fill: false,
-              borderColor: 'red',
-              borderWidth: 2,
-              borderDash: [5, 5],
-            }],
-          };
-          setHighestDerivativeLine(highestDerivativeLineData);
-    
-          const nextPointData = {
-            datasets: [{
-              label: 'Next Point',
-              data: [{ x: x[nextPointIndex], y: y[nextPointIndex] }],
-              backgroundColor: 'red',
-              borderColor: 'red',
-              pointRadius: 5,
-              pointHoverRadius: 7,
-            }],
-          };
-          setNextPoint(nextPointData);
-        } else {
-          setHighestDerivativeLine(null);
-          setNextPoint(null);
-        }
-      }
-    
-      setSelectedArea(showSelectedArea ? areaData : {});
+  const handleSelectArea = (startIndex, endIndex) => {
+    const { x, y } = chartData;
+
+    const selectedX = x.slice(startIndex, endIndex);
+    const selectedY = y.slice(startIndex, endIndex);
+
+    const selectedChartData = {
+      name: 'Selected Area',
+      x: selectedX,
+      y: selectedY,
     };
-    
+
+    let areaData = selectedChartData;
+
+    if (selectedSource !== 'interpolated') {
+      const derivative = calculateDerivative(selectedY);
+
+      const maxDerivativeIndex = derivative.indexOf(Math.max(...derivative));
+
+      const start = startIndex + maxDerivativeIndex;
+      const end = startIndex + maxDerivativeIndex + 1;
+
+      const highestIncomeX = x.slice(start, end);
+      const highestIncomeY = y.slice(start, end);
+
+      const highestIncomeArea = {
+        name: 'Highest Derivative',
+        x: highestIncomeX,
+        y: highestIncomeY,
+      };
+
+      areaData = highestIncomeArea;
+
+      const nextPointIndex = start + 1;
+      if (nextPointIndex < x.length) {
+        const highestDerivativeLineData = {
+          datasets: [{
+            label: 'Highest Derivative Line',
+            data: [
+              { x: highestIncomeX[0], y: highestIncomeY[0] },
+              { x: x[nextPointIndex], y: y[nextPointIndex] },
+            ],
+            fill: false,
+            borderColor: 'red',
+            borderWidth: 2,
+            borderDash: [5, 5],
+          }],
+        };
+        setHighestDerivativeLine(highestDerivativeLineData);
+
+        const nextPointData = {
+          datasets: [{
+            label: 'Next Point',
+            data: [{ x: x[nextPointIndex], y: y[nextPointIndex] }],
+            backgroundColor: 'red',
+            borderColor: 'red',
+            pointRadius: 5,
+            pointHoverRadius: 7,
+          }],
+        };
+        setNextPoint(nextPointData);
+      } else {
+        setHighestDerivativeLine(null);
+        setNextPoint(null);
+      }
+    }
+
+    setSelectedArea(showSelectedArea ? areaData : {});
+  };
+
 
   return (
     <div className="App">
