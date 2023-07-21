@@ -191,8 +191,11 @@ function App() {
     };
   
     setInterpolatedChartData(interpolatedData);
+  
+    // Select and display the area on the chart
     handleSelectArea(startIndex, endIndex);
-  }; // ToDo Akima
+  };
+  // ToDo Akima
 
   const handleSliderChange = (event, value) => {
     setSliderValue(value);
@@ -330,45 +333,44 @@ function App() {
 
   const handleSelectArea = (startIndex, endIndex) => {
     const { x, y } = chartData;
-
+  
     const selectedX = x.slice(startIndex, endIndex);
     const selectedY = y.slice(startIndex, endIndex);
-
+  
     const selectedChartData = {
       name: 'Selected Area',
       x: selectedX,
       y: selectedY,
     };
-
+  
     let areaData = selectedChartData;
-
-    if (selectedSource !== 'interpolated') {
+  
+    if (showSelectedArea && selectedSource !== 'interpolated') {
       const derivative = calculateDerivative(selectedY);
-
-      const maxDerivativeIndex = derivative.indexOf(Math.max(...derivative));
-
+      const maxDerivativeValue = Math.max(...derivative);
+      const maxDerivativeIndex = derivative.indexOf(maxDerivativeValue);
+  
       const start = startIndex + maxDerivativeIndex;
       const end = startIndex + maxDerivativeIndex + 1;
-
+  
       const highestIncomeX = x.slice(start, end);
       const highestIncomeY = y.slice(start, end);
-
+  
       const highestIncomeArea = {
         name: 'Highest Derivative',
         x: highestIncomeX,
         y: highestIncomeY,
       };
-
+  
       areaData = highestIncomeArea;
-
-      const nextPointIndex = start + 1;
-      if (nextPointIndex < x.length) {
+  
+      if (end < x.length) {
         const highestDerivativeLineData = {
           datasets: [{
             label: 'Highest Derivative Line',
             data: [
               { x: highestIncomeX[0], y: highestIncomeY[0] },
-              { x: x[nextPointIndex], y: y[nextPointIndex] },
+              { x: x[end], y: y[end] },
             ],
             fill: false,
             borderColor: 'red',
@@ -376,23 +378,26 @@ function App() {
             borderDash: [5, 5],
           }],
         };
-
+  
         const nextPointData = {
           datasets: [{
             label: 'Next Point',
-            data: [{ x: x[nextPointIndex], y: y[nextPointIndex] }],
+            data: [{ x: x[end], y: y[end] }],
             backgroundColor: 'red',
             borderColor: 'red',
             pointRadius: 5,
             pointHoverRadius: 7,
           }],
         };
-      } else {
+  
+        // Now you can use highestDerivativeLineData and nextPointData as needed, e.g., set them in useState for the chart data.
       }
     }
-
+  
     setSelectedArea(showSelectedArea ? areaData : {});
   };
+  
+  
 
 
 //----------------------------------------------APP-------------------------------------------------------
