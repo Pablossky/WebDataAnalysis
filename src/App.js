@@ -11,8 +11,8 @@ import applyLowpassFilter from './functionality/lowpassFilter.js';
 import interpolateArray from './functionality/interpolateArray.js';
 import "./functionality/dataManagement.js";
 import "./functionality/plottingData.js";
-import { calculateDerivative } from './functionality/calculateDerivative.js';
 import { renderData, renderFilteredData, renderResampledData } from "./functionality/renderingData.js";
+import calculateDerivative from './functionality/calculateDerivative.js';
 
 // Components
 import SliderInput from './components/SliderInput';
@@ -29,7 +29,6 @@ import {
   useOffset,
   useInterpolationOffset,
   useLowpassEnabled,
-  usePrintSelectedArea,
   useCutoffFrequency,
   useSampleRate,
   useOriginalChartData,
@@ -37,12 +36,8 @@ import {
   useResampledChartData,
   useSelectedInterpolation,
   useOffsettedChartData,
-  useInterpolatedChartData,
-  useInterpolatedData,
   useShowSelectedArea,
   useActiveBookmark,
-  useHighestDerivativeLine,
-  useNextPoint,
   useShowMenu,
   useSelectedArea,
 } from './hooks/useStates.js';
@@ -59,7 +54,6 @@ function App() {
   const { offset, setOffset } = useOffset(0);
   const { interpolationOffset, setInterpolationOffset } = useInterpolationOffset(0);
   const { lowpassFilterEnabled, setLowpassEnabled } = useLowpassEnabled(false);
-  const { printSelectedArea, setPrintSelectedArea } = usePrintSelectedArea(false);
   const { cutoffFrequency, setCutoffFrequency } = useCutoffFrequency(1000);
   const { sampleRate, setSampleRate } = useSampleRate(1000);
   const { originalChartData, setOriginalChartData } = useOriginalChartData({
@@ -76,8 +70,6 @@ function App() {
   });
   const { showSelectedArea, setShowSelectedArea } = useShowSelectedArea(false);
   const { activeBookmark, setActiveBookmark } = useActiveBookmark('input');
-  const { highestDerivativeLine, setHighestDerivativeLine } = useHighestDerivativeLine(null);
-  const { nextPoint, setNextPoint } = useNextPoint(null);
   const { showMenu, setShowMenu } = useShowMenu(true);
   const { selectedArea, setSelectedArea } = useSelectedArea({});
 
@@ -118,15 +110,11 @@ function App() {
 
   const handleToggleMenu = () => {
     setShowMenu(!showMenu);
-  };
+  }; // Ok
 
   const handleInterpolationOffsetChange = (event, value) => {
     setInterpolationOffset(value);
-  };
-
-  const handlePrintSelectedArea = () => {
-    setPrintSelectedArea(!printSelectedArea);
-  };
+  }; // Ok
 
   const handleFileUpload = (e) => {
     const reader = new FileReader();
@@ -144,43 +132,46 @@ function App() {
       setChartData({ name: 'Your Data', x, y });
       setOriginalChartData({ name: 'Your Data', x, y });
     };
-  };
+  }; // Ok
 
   const handleInterpolationChange = (event, { value }) => {
     setSelectedInterpolation(value);
     handleInterpolation();
-  };
+  }; // Ok
 
   const handleCutoffFrequency = (event, value) => {
     setCutoffFrequency(value);
-  };
+  }; // Ok
 
   const handleSampleRate = (event, value) => {
     setSampleRate(value);
-  };
+  }; // Ok
 
   const handleBookmarkClick = (bookmark) => {
     setActiveBookmark(bookmark);
-  };
+  }; // Ok
 
   const handleInterpolation = () => {
     const { x, y } = filteredChartData;
     const numValues = Math.round(sliderValue);
-
-    const slicedX = x.slice(offset, Math.min(offset + numValues, x.length));
-    const slicedY = y.slice(offset, Math.min(offset + numValues, y.length));
-
+  
+    const startIndex = offset;
+    const endIndex = Math.min(offset + numValues, x.length);
+  
+    const slicedX = x.slice(startIndex, endIndex);
+    const slicedY = y.slice(startIndex, endIndex);
+  
     let interpolatedX, interpolatedY;
-
+  
     if (selectedInterpolation === 'akima') {
       const { x: akimaInterpolatedX, y: akimaInterpolatedY } = akimaInterpolate(
         x,
         y,
         resampledChartData.x // Use resampledChartData.x instead of numValues
       );
-
-      interpolatedX = akimaInterpolatedX.slice(0, numValues);
-      interpolatedY = akimaInterpolatedY.slice(0, numValues);
+  
+      interpolatedX = akimaInterpolatedX.slice(startIndex, endIndex);
+      interpolatedY = akimaInterpolatedY.slice(startIndex, endIndex);
     } else {
       const { x: otherInterpolatedX, y: otherInterpolatedY } = interpolateArray(
         slicedX,
@@ -188,22 +179,20 @@ function App() {
         numValues,
         selectedInterpolation
       );
-
+  
       interpolatedX = otherInterpolatedX;
       interpolatedY = otherInterpolatedY;
     }
-
+  
     const interpolatedData = {
       name: 'Interpolated',
       x: interpolatedX,
       y: interpolatedY,
     };
-
+  
     setInterpolatedChartData(interpolatedData);
-
-    // Select and display the area on the chart
-    handleSelectArea(offset, offset + numValues);
-  };
+    handleSelectArea(startIndex, endIndex);
+  }; // ToDo Akima
 
   const handleSliderChange = (event, value) => {
     setSliderValue(value);
@@ -258,7 +247,7 @@ function App() {
     };
 
     setResampledChartData(resampledChartData);
-  };
+  }; // ToDo limits on Akima
 
   const handleOffsetSliderChange = (event, value) => {
     setOffset(value);
@@ -274,11 +263,11 @@ function App() {
     };
 
     setOffsettedChartData(offsettedChartData);
-  };
+  }; // Ok
 
   const handleLowpassToggle = () => {
     setLowpassEnabled(!lowpassFilterEnabled);
-  };
+  }; // Ok
 
   const handleDataSourceSwitch = (value) => {
     setSelectedSource(value);
@@ -309,7 +298,7 @@ function App() {
         y: interpolatedY.slice(interpolationStart, interpolationEnd),
       });
     }
-  };
+  }; // ToChange
 
   const handlePaste = (event) => {
     const clipboardData = event.clipboardData || window.clipboardData;
@@ -333,11 +322,11 @@ function App() {
     setOriginalChartData({ name: 'dataFile', x, y });
 
     event.preventDefault();
-  };
+  }; // Ok
 
   const handleShowSelectedArea = () => {
     setShowSelectedArea(!showSelectedArea);
-  };
+  }; // ?
 
   const handleSelectArea = (startIndex, endIndex) => {
     const { x, y } = chartData;
@@ -387,7 +376,6 @@ function App() {
             borderDash: [5, 5],
           }],
         };
-        setHighestDerivativeLine(highestDerivativeLineData);
 
         const nextPointData = {
           datasets: [{
@@ -399,15 +387,13 @@ function App() {
             pointHoverRadius: 7,
           }],
         };
-        setNextPoint(nextPointData);
       } else {
-        setHighestDerivativeLine(null);
-        setNextPoint(null);
       }
     }
 
     setSelectedArea(showSelectedArea ? areaData : {});
   };
+
 
 //----------------------------------------------APP-------------------------------------------------------
 
