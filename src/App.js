@@ -187,17 +187,11 @@ function App() {
       resampledX = interpolatedX;
       resampledY = interpolatedY;
     } else if (selectedInterpolation === 'akima') {
-      const { x, y } = chartData;
-      const startIndex = Math.round(interpolationOffset * (x.length - numValues));
-
-      const slicedX = x.slice(startIndex, startIndex + numValues);
-      const slicedY = y.slice(startIndex, startIndex + numValues);
-
-      const { x: interpolatedX, y: interpolatedY } = akimaInterpolate(
-        slicedX,
-        slicedY,
+      const { x: interpolatedX, y: interpolatedY } = interpolateArray(
+        filteredChartData.x,
+        filteredChartData.y,
         numValues,
-        offset
+        'akima'
       );
 
       resampledX = interpolatedX;
@@ -210,7 +204,7 @@ function App() {
       };
       setInterpolatedChartData(interpolatedData);
 
-      handleSelectArea(startIndex, startIndex + numValues);
+      //handleSelectArea(startIndex, startIndex + numValues);
     }
 
     const resampledChartData = {
