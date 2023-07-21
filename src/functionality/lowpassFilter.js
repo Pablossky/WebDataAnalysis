@@ -1,3 +1,5 @@
+// Based on a RC circuit, Wikipedia
+
 function applyLowpassFilter(data, cutoffFrequency, sampleRate) {
     const RC = 1.0 / (cutoffFrequency * 2 * Math.PI);
     const dt = 1.0 / sampleRate;

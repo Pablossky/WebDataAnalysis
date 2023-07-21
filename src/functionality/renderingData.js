@@ -1,6 +1,7 @@
 
 import ResampledTable from './plottingData.js';
 
+// To print original data in a box
 const renderData = ( chartData, originalChartData, selectedSource ) => {
     if (selectedSource === 'dataFile') {
       return (
@@ -74,6 +75,7 @@ const renderData = ( chartData, originalChartData, selectedSource ) => {
     }
 };
 
+// To print filtered data in a box
 const renderFilteredData = (filteredChartData) => {
     if (filteredChartData.x.length > 0) {
       return (
@@ -101,7 +103,8 @@ const renderFilteredData = (filteredChartData) => {
     }
 };
 
-const renderGeneratedArray = (resampledChartData, offset, sampleCount) => {
+// To print resampled data in a box
+const renderResampledData = (resampledChartData, offset, sampleCount) => {
     const array1 = resampledChartData.x.slice(offset, Math.min(offset + sampleCount));
     const array2 = resampledChartData.y.slice(offset, Math.min(offset + sampleCount));
 
@@ -112,4 +115,4 @@ const renderGeneratedArray = (resampledChartData, offset, sampleCount) => {
     );
 };
 
-export { renderData, renderFilteredData, renderGeneratedArray }
+export { renderData, renderFilteredData, renderResampledData }

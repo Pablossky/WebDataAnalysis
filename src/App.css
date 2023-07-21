@@ -41,7 +41,7 @@
 .ChartPlotter {
   position: absolute;
   margin-left: 20px;
-  padding-top: 15%;
+  padding-top: 5%;
   width: 55%;
 }
 
@@ -92,10 +92,6 @@
 .FunctionalButton {
   padding: 10px;
   margin: 10px;
-}
-
-.NewArrayTable {
-  margin-left: 300px;
 }
 
 .Container {

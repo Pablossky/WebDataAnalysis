@@ -1,7 +1,7 @@
-export function calculateDerivative(arr) {
+export function calculateDerivative(array) {
     const derivative = [];
-    for (let i = 1; i < arr.length; i++) {
-      derivative.push(arr[i] - arr[i - 1]);
+    for (let i = 1; i < array.length; i++) {
+      derivative.push(array[i] - array[i - 1]);
     }
     return derivative;
   }

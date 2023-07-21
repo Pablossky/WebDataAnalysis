@@ -23,5 +23,6 @@ const copyDataToTxt = (chartData) => {
   link.click();
   window.URL.revokeObjectURL(tempUrl);
 };
+
     
-module.exports = { clearingDataText, copyDataToTxt };
+module.exports = { clearingDataText, copyDataToTxt }

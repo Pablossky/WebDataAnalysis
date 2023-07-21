@@ -1,3 +1,5 @@
+// Based on Hiroshi Akima script "A new method of interpolation and smooth curve fitting based on local procedures"
+
 function akimaInterpolate(x, y, xDesired) {
   const n = x.length;
   const m = y.length;
@@ -14,6 +16,7 @@ function akimaInterpolate(x, y, xDesired) {
   }
 
   const interpolatedX = xDesired.slice(); 
+  
   const interpolatedY = [];
   for (let i = 0; i < xDesired.length; i++) {
     const xd = xDesired[i];

@@ -5,6 +5,7 @@ function interpolateArray(x, y, numValues, method, offset) {
   let interpolatedX, interpolatedY;
 
   if (method === 'linear') {
+
     interpolatedX = [];
     interpolatedY = [];
 
@@ -17,15 +18,20 @@ function interpolateArray(x, y, numValues, method, offset) {
       interpolatedX.push(interpolatedXValue);
       interpolatedY.push(interpolatedYValue);
     }
+
   } else if (method === 'cubic') {
+
     const interpolator = numeric.spline(x, y, 'cubic');
 
     interpolatedX = numeric.linspace(x[0], x[x.length - 1], numValues);
     interpolatedY = interpolatedX.map((value) => interpolator.at(value));
+
   } else if (method === 'akima') {
+
     const interpolatedData = akimaInterpolate(x, y, numValues);
     interpolatedX = interpolatedData.x;
     interpolatedY = interpolatedData.y;
+    
   } else {
     throw new Error(`Invalid interpolation method: ${method}`);
   }

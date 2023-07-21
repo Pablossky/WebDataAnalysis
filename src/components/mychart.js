@@ -12,7 +12,7 @@ const layout = (title, xlabel, ylabel) => {
     return {
     ...dflt.layout, 
     ...{
-      height: 600,
+      height: 1000,
       showlegend: true,
       legend: {
         x: 1.01,
