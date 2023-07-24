@@ -490,11 +490,13 @@ function App() {
         <div>
         <Chart
             data={[
+              
+              subtractedChartData,
               filteredChartData,
               resampledChartData,
               offsettedChartData,
               interpolatedChartData,
-              subtractedChartData, // Add subtractedChartData to the chart
+              
               { ...originalCopyData, borderColor: 'purple' },
               splitDataChartData,
             ]}
