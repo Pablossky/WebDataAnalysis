@@ -157,11 +157,11 @@ function App() {
 
   const handleToggleMenu = () => {
     setShowMenu(!showMenu);
-  }; // Ok
+  }; // 
 
   const handleSubtractFromOriginalToggle = () => {
     setSubtractFromOriginal(!subtractFromOriginal);
-  }; // Ok
+  };
 
   const handleInterpolationOffsetChange = (event, value) => {
     setInterpolationOffset(value);
@@ -200,9 +200,10 @@ function App() {
 
   const handleSubtractionSliderChange = (event, value) => {
     setSubtractionValue(value);
+    // Apply subtraction to the resampledChartData and update the chart data
     const modifiedChartData = applySubtraction(resampledChartData, value);
     setSubtractedChartData(modifiedChartData);
-  }; // Ok
+  };
 
   const handleBookmarkClick = (bookmark) => {
     setActiveBookmark(bookmark);
@@ -218,12 +219,14 @@ function App() {
       y: filteredChartData.y.slice(0, value).concat(y.slice(value)),
     });
 
+    // Create a copy of originalChartData for displaying Split Data
     const splitDataX = filteredChartData.x.slice(value);
     const splitDataY = filteredChartData.y.slice(value);
 
     setSplitDataChartData({
       ...filteredChartData,
       name: 'Split Data',
+      borderColor: 'red', // Set the border color to red for Split Data
       x: splitDataX,
       y: splitDataY,
     });
@@ -508,7 +511,7 @@ function App() {
               onClick={() => handleBookmarkClick('cut')}
               primary={activeBookmark === 'cut'}
             >
-              Cut Chart
+              Cut Chart Options
             </Button>
             <Button
               className={`Bookmark ${activeBookmark === 'filter' ? 'active' : ''}`}
@@ -540,11 +543,11 @@ function App() {
             </Button>
           </div>
 
-          {activeBookmark === 'cut' && (
+          {activeBookmark === 'input' && (
             <div className="InputData">
               <div className="info-button">
                 <Popup
-                  content="To do: możliwość przycinania wykresu z każdej strony"
+                  content="Choose data from your computer saved in .xlsx file or paste it from your clipboard."
                   trigger={
                     <div className="ui icon button">
                       <i className="info icon"></i>
@@ -552,21 +555,41 @@ function App() {
                   }
                 />
               </div>
+              <div className="InputFile">
+                Import .xlsx file
+                <div></div>
+                <Input
+                  type="file"
+                  accept=".xlsx, .xls"
+                  onChange={handleFileUpload}
+                />
+
+                <div className="Space"></div>
+                Paste data from clipboard
+                <div></div>
+                <Input
+                  className="InputData"
+                  defaultValue="Input data..."
+                  onChange={handlePaste}
+                />
+              </div>
+              <div className="Space"></div>
+
             </div>
           )}
 
-          {activeBookmark === 'filter' && (
-            <div className="FilterOptions">
-              <div>
-                <LowpassFilter
-                  lowpassFilterEnabled={lowpassFilterEnabled}
-                  handleLowpassToggle={handleLowpassToggle}
-                  cutoffFrequency={cutoffFrequency}
-                  handleCutoffFrequency={handleCutoffFrequency}
-                  sampleRate={sampleRate}
-                  handleSampleRate={handleSampleRate}
-                />
-              </div>
+          {activeBookmark === 'cut' && (
+            <div className='CutOptions'>
+            <div className="info-button">
+              <Popup
+                content="To do: przycinanie z kazdej strony"
+                trigger={
+                  <div className="ui icon button">
+                    <i className="info icon"></i>
+                  </div>
+                }
+              />
+            </div>
             </div>
           )}
 
