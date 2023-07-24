@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import Plotly from "react-plotly.js";
 import { dflt } from './chart-plotly';
+import { Popup } from 'semantic-ui-react';
 
 const config = {
   ...dflt.config,
@@ -78,12 +79,6 @@ function Chart({ data }) {
       }
     });
 
-    // Mark selected points as selected in the plotData
-    if (selectedPoints.point1 && selectedPoints.point2) {
-      pData[selectedPoints.point1.datasetIndex].selected = true;
-      pData[selectedPoints.point2.datasetIndex].selected = true;
-    }
-
     return pData;
   }, [data, selectedPoints]);
 
@@ -130,14 +125,25 @@ function Chart({ data }) {
         style={{ width: '100%', height: '100%' }}
       />
 
+<div className="info-button-regression" style={{float:"right", display: 'flex', padding: '40px'}}>
+        <Popup
+          content="After selecting two points on chart, difference in X and Y will be shown. The equation of LINEAR REGRESSION FUNCTION depends on these points"
+          trigger={
+            <div className="ui icon button">
+              <i className="info icon"></i>
+            </div>
+          }
+        />
+      </div>
+
       {linearRegressionResult && (
-        <div style={{ marginTop: '20px' }}>
+        <div style={{ padding: '10px', borderRadius: '5px', marginTop: '20px', backgroundColor: '#f1f1f1' }}>
           <div>
-            Point 1: ({data[selectedPoints.point1.datasetIndex].x[selectedPoints.point1.index]}, 
+            Point 1: ({data[selectedPoints.point1.datasetIndex].x[selectedPoints.point1.index]},
             {data[selectedPoints.point1.datasetIndex].y[selectedPoints.point1.index]})
           </div>
           <div>
-            Point 2: ({data[selectedPoints.point2.datasetIndex].x[selectedPoints.point2.index]}, 
+            Point 2: ({data[selectedPoints.point2.datasetIndex].x[selectedPoints.point2.index]},
             {data[selectedPoints.point2.datasetIndex].y[selectedPoints.point2.index]})
           </div>
           <div>
