@@ -76,12 +76,13 @@ function App() {
   const [originalCopyData, setOriginalCopyData] = useState({ name: 'Copy of Original', x: [], y: [] });
   const [subtractionValue, setSubtractionValue] = useState(0.0);
   const [subtractFromOriginal, setSubtractFromOriginal] = useState(false);
-
   const [subtractedChartData, setSubtractedChartData] = useState({
     name: 'Subtracted',
     x: [],
     y: [],
   });
+  const [highestDerivativeLineData, setHighestDerivativeLineData] = useState(null);
+  const [nextPointData, setNextPointData] = useState(null);
 
 
   // Required to parse Excel data
@@ -109,14 +110,14 @@ function App() {
     name: 'Original Data Copy',
     x: [...originalChartData.x],
     y: [...originalChartData.y],
-    borderColor: 'purple', // Set the border color to purple for the Original Data Copy
+    borderColor: 'purple',
   };
 
   const filteredDataCopy = {
     name: 'Filtered Data Copy',
-    x: [...chartData.x], // Use chartData.x instead of filteredChartData.x
-    y: [...chartData.y], // Use chartData.y instead of filteredChartData.y
-    borderColor: 'blue', // Set the border color to blue for the Filtered Data Copy
+    x: [...chartData.x],
+    y: [...chartData.y],
+    borderColor: 'blue',
   };
 
   const filteredChartData = lowpassFilterEnabled
@@ -126,19 +127,18 @@ function App() {
       y: applyLowpassFilter(originalChartData.y, cutoffFrequency, sampleRate),
     }
     : chartData;
-    
-    const applySubtraction = (data, value) => {
-      const { x, y } = data;
-      const subtractedY = y.map((yValue) => yValue - value);
-      return { name: 'Subtracted', x, y: subtractedY };
-    };
-    
+
+  const applySubtraction = (data, value) => {
+    const { x, y } = data;
+    const subtractedY = y.map((yValue) => yValue - value);
+    return { name: 'Subtracted', x, y: subtractedY };
+  };
+
 
   //---------------------------------------USE_EFFECT-----------------------------------------
 
   useEffect(() => {
     handleInterpolation();
-    // Update the subtractedChartData when the originalChartData changes
     if (subtractFromOriginal) {
       const modifiedChartData = applySubtraction(originalChartData, subtractionValue);
       setSubtractedChartData(modifiedChartData);
@@ -157,11 +157,11 @@ function App() {
 
   const handleToggleMenu = () => {
     setShowMenu(!showMenu);
-  }; // 
-  
+  }; // Ok
+
   const handleSubtractFromOriginalToggle = () => {
     setSubtractFromOriginal(!subtractFromOriginal);
-  };
+  }; // Ok
 
   const handleInterpolationOffsetChange = (event, value) => {
     setInterpolationOffset(value);
@@ -200,11 +200,9 @@ function App() {
 
   const handleSubtractionSliderChange = (event, value) => {
     setSubtractionValue(value);
-    // Apply subtraction to the resampledChartData and update the chart data
     const modifiedChartData = applySubtraction(resampledChartData, value);
     setSubtractedChartData(modifiedChartData);
-  };
-
+  }; // Ok
 
   const handleBookmarkClick = (bookmark) => {
     setActiveBookmark(bookmark);
@@ -220,14 +218,12 @@ function App() {
       y: filteredChartData.y.slice(0, value).concat(y.slice(value)),
     });
 
-    // Create a copy of originalChartData for displaying Split Data
     const splitDataX = filteredChartData.x.slice(value);
     const splitDataY = filteredChartData.y.slice(value);
 
     setSplitDataChartData({
       ...filteredChartData,
       name: 'Split Data',
-      borderColor: 'red', // Set the border color to red for Split Data
       x: splitDataX,
       y: splitDataY,
     });
@@ -236,22 +232,22 @@ function App() {
   const handleInterpolation = () => {
     const { x, y } = filteredChartData;
     const numValues = Math.round(sliderValue);
-  
+
     const startIndex = offset;
     const endIndex = Math.min(offset + numValues, x.length);
-  
+
     const slicedX = x.slice(startIndex, endIndex);
     const slicedY = y.slice(startIndex, endIndex);
-  
+
     let interpolatedX, interpolatedY;
-  
+
     if (selectedInterpolation === 'akima') {
       const { x: akimaInterpolatedX, y: akimaInterpolatedY } = akimaInterpolate(
         x,
         y,
         resampledChartData.x // Use resampledChartData.x instead of numValues
       );
-  
+
       interpolatedX = akimaInterpolatedX.slice(startIndex, endIndex);
       interpolatedY = akimaInterpolatedY.slice(startIndex, endIndex);
     } else {
@@ -261,23 +257,22 @@ function App() {
         numValues,
         selectedInterpolation
       );
-  
+
       interpolatedX = otherInterpolatedX;
       interpolatedY = otherInterpolatedY;
     }
-  
+
     const interpolatedData = {
       name: 'Interpolated',
       x: interpolatedX,
       y: interpolatedY,
     };
-  
+
     setInterpolatedChartData(interpolatedData);
-  
+
     // Select and display the area on the chart
     handleSelectArea(startIndex, endIndex);
-  };
-  // ToDo Akima
+  }; // ToDo Akima
 
   const handleSliderChange = (event, value) => {
     setSliderValue(value);
@@ -415,37 +410,37 @@ function App() {
 
   const handleSelectArea = (startIndex, endIndex) => {
     const { x, y } = chartData;
-  
+
     const selectedX = x.slice(startIndex, endIndex);
     const selectedY = y.slice(startIndex, endIndex);
-  
+
     const selectedChartData = {
       name: 'Selected Area',
       x: selectedX,
       y: selectedY,
     };
-  
+
     let areaData = selectedChartData;
-  
+
     if (showSelectedArea && selectedSource !== 'interpolated') {
       const derivative = calculateDerivative(selectedY);
       const maxDerivativeValue = Math.max(...derivative);
       const maxDerivativeIndex = derivative.indexOf(maxDerivativeValue);
-  
+
       const start = startIndex + maxDerivativeIndex;
       const end = startIndex + maxDerivativeIndex + 1;
-  
+
       const highestIncomeX = x.slice(start, end);
       const highestIncomeY = y.slice(start, end);
-  
+
       const highestIncomeArea = {
         name: 'Highest Derivative',
         x: highestIncomeX,
         y: highestIncomeY,
       };
-  
+
       areaData = highestIncomeArea;
-  
+
       if (end < x.length) {
         const highestDerivativeLineData = {
           datasets: [{
@@ -460,7 +455,7 @@ function App() {
             borderDash: [5, 5],
           }],
         };
-  
+
         const nextPointData = {
           datasets: [{
             label: 'Next Point',
@@ -471,32 +466,25 @@ function App() {
             pointHoverRadius: 7,
           }],
         };
-  
-        // Now you can use highestDerivativeLineData and nextPointData as needed, e.g., set them in useState for the chart data.
       }
     }
-  
+
     setSelectedArea(showSelectedArea ? areaData : {});
   };
-  
-  
 
-
-//----------------------------------------------APP-------------------------------------------------------
+  //----------------------------------------------APP-------------------------------------------------------
 
   return (
     <div className="App">
       <div className="ChartPlotter" style={{ width: showMenu ? '55%' : '98%' }}>
         <div>
-        <Chart
+          <Chart
             data={[
-              
               subtractedChartData,
               filteredChartData,
               resampledChartData,
               offsettedChartData,
               interpolatedChartData,
-              
               { ...originalCopyData, borderColor: 'purple' },
               splitDataChartData,
             ]}
@@ -505,7 +493,6 @@ function App() {
 
         </div>
       </div>
-
       {showMenu && (
         <div className="OptionsPanel">
           <div className="ui fluid vertical pointing menu">
@@ -515,6 +502,13 @@ function App() {
               primary={activeBookmark === 'input'}
             >
               Input Options
+            </Button>
+            <Button
+              className={`Bookmark ${activeBookmark === 'cut' ? 'active' : ''}`}
+              onClick={() => handleBookmarkClick('cut')}
+              primary={activeBookmark === 'cut'}
+            >
+              Cut Chart
             </Button>
             <Button
               className={`Bookmark ${activeBookmark === 'filter' ? 'active' : ''}`}
@@ -546,11 +540,11 @@ function App() {
             </Button>
           </div>
 
-          {activeBookmark === 'input' && (
+          {activeBookmark === 'cut' && (
             <div className="InputData">
               <div className="info-button">
                 <Popup
-                  content="Choose data from your computer saved in .xlsx file or paste it from your clipboard."
+                  content="To do: możliwość przycinania wykresu z każdej strony"
                   trigger={
                     <div className="ui icon button">
                       <i className="info icon"></i>
@@ -558,26 +552,21 @@ function App() {
                   }
                 />
               </div>
-              <div className="InputFile">
-                Import .xlsx file
-                <div></div>
-                <Input
-                  type="file"
-                  accept=".xlsx, .xls"
-                  onChange={handleFileUpload}
-                />
+            </div>
+          )}
 
-                <div className="Space"></div>
-                Paste data from clipboard
-                <div></div>
-                <Input
-                  className="InputData"
-                  defaultValue="Input data..."
-                  onChange={handlePaste}
+          {activeBookmark === 'filter' && (
+            <div className="FilterOptions">
+              <div>
+                <LowpassFilter
+                  lowpassFilterEnabled={lowpassFilterEnabled}
+                  handleLowpassToggle={handleLowpassToggle}
+                  cutoffFrequency={cutoffFrequency}
+                  handleCutoffFrequency={handleCutoffFrequency}
+                  sampleRate={sampleRate}
+                  handleSampleRate={handleSampleRate}
                 />
               </div>
-              <div className="Space"></div>
-
             </div>
           )}
 
@@ -648,12 +637,11 @@ function App() {
               </div>
 
               <div className="slider-container">
-                {/* Add a new slider for the subtraction value */}
                 <SliderInput
                   value={subtractionValue}
                   min={0}
-                  max={originalChartData.y.max} // Set the max value based on your preference
-                  step={0.01} // Set the step to allow float values
+                  max={200}
+                  step={0.01}
                   onChange={handleSubtractionSliderChange}
                   name={'Subtraction Value'}
                 />
