@@ -75,6 +75,13 @@ function App() {
   const [splitIndex, setSplitIndex] = useState(originalChartData.x.length / 2);
   const [originalCopyData, setOriginalCopyData] = useState({ name: 'Copy of Original', x: [], y: [] });
   const [subtractionValue, setSubtractionValue] = useState(0.0);
+  const [subtractFromOriginal, setSubtractFromOriginal] = useState(false);
+
+  const [subtractedChartData, setSubtractedChartData] = useState({
+    name: 'Subtracted',
+    x: [],
+    y: [],
+  });
 
 
   // Required to parse Excel data
@@ -109,14 +116,8 @@ function App() {
     name: 'Filtered Data Copy',
     x: [...chartData.x], // Use chartData.x instead of filteredChartData.x
     y: [...chartData.y], // Use chartData.y instead of filteredChartData.y
-    borderColor: 'blue', // Set the border color to blue for the Filtered Data
+    borderColor: 'blue', // Set the border color to blue for the Filtered Data Copy
   };
-    
-    const [modifiedInterpolatedChartData, setModifiedInterpolatedChartData] = useState({
-      name: 'Modified Interpolated',
-      x: [],
-      y: [],
-    });
 
   const filteredChartData = lowpassFilterEnabled
     ? {
@@ -129,17 +130,23 @@ function App() {
     const applySubtraction = (data, value) => {
       const { x, y } = data;
       const subtractedY = y.map((yValue) => yValue - value);
-      return { name: data.name, x, y: subtractedY };
+      return { name: 'Subtracted', x, y: subtractedY };
     };
+    
 
   //---------------------------------------USE_EFFECT-----------------------------------------
 
   useEffect(() => {
     handleInterpolation();
-  }, [lowpassFilterEnabled, chartData, interpolationOffset, splitIndex, selectedInterpolation]);
+    // Update the subtractedChartData when the originalChartData changes
+    if (subtractFromOriginal) {
+      const modifiedChartData = applySubtraction(originalChartData, subtractionValue);
+      setSubtractedChartData(modifiedChartData);
+    }
+  }, [lowpassFilterEnabled, chartData, interpolationOffset, splitIndex, originalChartData, subtractFromOriginal, subtractionValue]);
 
 
-  // Copy of original data
+
   useEffect(() => {
     const { x, y } = originalChartData;
     setOriginalCopyData({ name: 'Copy of Original', x: [...x], y: [...y] });
@@ -147,9 +154,14 @@ function App() {
 
   //-----------------------------------------HANDLE-------------------------------------------
 
+
   const handleToggleMenu = () => {
     setShowMenu(!showMenu);
-  }; // Ok
+  }; // 
+  
+  const handleSubtractFromOriginalToggle = () => {
+    setSubtractFromOriginal(!subtractFromOriginal);
+  };
 
   const handleInterpolationOffsetChange = (event, value) => {
     setInterpolationOffset(value);
@@ -188,10 +200,11 @@ function App() {
 
   const handleSubtractionSliderChange = (event, value) => {
     setSubtractionValue(value);
-    // Apply subtraction to the interpolatedChartData
-    const modifiedData = applySubtraction(interpolatedChartData, value);
-    setModifiedInterpolatedChartData(modifiedData);
+    // Apply subtraction to the resampledChartData and update the chart data
+    const modifiedChartData = applySubtraction(resampledChartData, value);
+    setSubtractedChartData(modifiedChartData);
   };
+
 
   const handleBookmarkClick = (bookmark) => {
     setActiveBookmark(bookmark);
@@ -270,10 +283,9 @@ function App() {
     setSliderValue(value);
     const numValues = Math.round(value);
     setSampleCount(numValues);
-  
+
     let resampledX, resampledY;
-    let modifiedInterpolatedX, modifiedInterpolatedY;
-  
+
     if (selectedInterpolation === 'linear') {
       const resamplingFactor = (splitDataChartData.x.length - 1) / (numValues - 1);
       resampledX = [];
@@ -291,14 +303,6 @@ function App() {
           const interpolatedY = splitDataChartData.y[index] + remainder * (splitDataChartData.y[index + 1] - splitDataChartData.y[index]);
           resampledX.push(interpolatedX);
           resampledY.push(interpolatedY);
-        
-      // Calculate the modified interpolated data
-      modifiedInterpolatedX = splitDataChartData.x.map((xValue) => xValue);
-      modifiedInterpolatedY = splitDataChartData.y.map((yValue) => yValue - subtractionValue);
-  
-      // Use the original interpolated data for resampling
-      resampledX = splitDataChartData.x;
-      resampledY = splitDataChartData.y;
         }
       }
     } else if (selectedInterpolation === 'cubic') {
@@ -316,34 +320,19 @@ function App() {
         splitDataChartData.y,
         resampledChartData.x // Use resampledChartData.x instead of numValues
       );
-  
+
       resampledX = akimaInterpolatedX;
       resampledY = akimaInterpolatedY;
     }
-  
+
     const resampledChartData = {
       name: 'Resampling',
       x: resampledX,
       y: resampledY,
     };
-  
+
     setResampledChartData(resampledChartData);
-  
-    if (selectedInterpolation === 'linear') {
-      // Update the modified interpolated data again with the updated resampledChartData
-      modifiedInterpolatedX = resampledChartData.x.map((xValue) => xValue);
-      modifiedInterpolatedY = resampledChartData.y.map((yValue) => yValue - subtractionValue);
-  
-      // Update the modifiedInterpolatedChartData
-      setModifiedInterpolatedChartData({
-        name: 'Modified Interpolated',
-        x: modifiedInterpolatedX,
-        y: modifiedInterpolatedY,
-      });
-    }
-  };
-  
-  // ToDo limits on Akima
+  }; // ToDo limits on Akima
 
   const handleOffsetSliderChange = (event, value) => {
     setOffset(value);
@@ -501,15 +490,17 @@ function App() {
         <div>
         <Chart
             data={[
-              chartData, // Use chartData instead of filteredChartData for displaying Filtered Data
+              filteredChartData,
               resampledChartData,
               offsettedChartData,
-              modifiedInterpolatedChartData, // Use modifiedInterpolatedChartData for displaying Modified Interpolated Data
-              originalDataCopy, // Add originalDataCopy to the chart with purple border color
-              splitDataChartData, // Use splitDataChartData for displaying Split Data with red border color
+              interpolatedChartData,
+              subtractedChartData, // Add subtractedChartData to the chart
+              { ...originalCopyData, borderColor: 'purple' },
+              splitDataChartData,
             ]}
             legend={true}
           />
+
         </div>
       </div>
 
@@ -659,7 +650,7 @@ function App() {
                 <SliderInput
                   value={subtractionValue}
                   min={0}
-                  max={10} // Set the max value based on your preference
+                  max={originalChartData.y.max} // Set the max value based on your preference
                   step={0.01} // Set the step to allow float values
                   onChange={handleSubtractionSliderChange}
                   name={'Subtraction Value'}
