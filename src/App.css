@@ -82,7 +82,10 @@
   border-radius: 5px;
 }
 
-
 .Container {
   display: flex;
+}
+
+.Input {
+  max-width: 2px !important
 }

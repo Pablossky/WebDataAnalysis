@@ -68,7 +68,7 @@
   }
   
   .toggle-switch.checked {
-    background-color: darkgray;
+    background-color: rgb(107, 107, 107);
   }
   
   .toggle-switch-thumb {

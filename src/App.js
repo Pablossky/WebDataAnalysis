@@ -493,10 +493,16 @@ function App() {
 
   return (
     <div className="App" style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5' }}>
-      <div style={{ width: '80%', display: 'flex', alignItems: 'stretch', background: '#f4f4f4' }}>
+      <Segment style={{ width: '70%', background: '#fff', display: 'flex', alignItems: 'stretch', border: '1px solid #ccc' }}>
+        <Grid columns={1} divided centered style={{ flex: 1 }}>
+          <Grid.Column textAlign="center" width={showMenu ? 16 : 16}>
+
+      
+      <div style={{width: '100%', display: 'flex', alignItems: 'stretch', background: '#fff' }}>
         <Grid columns={2} divided centered style={{ flex: 1 }}>
           <Grid.Column textAlign="center" width={showMenu ? 10 : 16}>
             <Segment style={{ background: '#fff', border: '1px solid #ccc' }}>
+            <h1>Chart</h1>
               <Chart
                 data={[
                   subtractedChartData,
@@ -514,6 +520,7 @@ function App() {
           {showMenu && (
             <Grid.Column textAlign="center" width={5}>
               <Segment style={{ background: '#fff', border: '1px solid #ccc', height: '100%', maxHeight: '100%', overflow: 'auto' }}>
+              <h1>Context menu</h1>
 
                 <Popup
                   content="You can show/hide some function by clicking on matching switch."
@@ -612,7 +619,7 @@ function App() {
                             max={originalChartData.x.length}
                             onChange={handleSplitSliderChange}
                             name={'Split Position'}
-                            sizeName={20}
+                            sizeName={30}
                             sizeSlider={60}
                             sizeInput={20}
                           />
@@ -626,7 +633,7 @@ function App() {
                             step={0.01}
                             onChange={handleSubtractionSliderChange}
                             name={'Subtraction Value'}
-                            sizeName={20}
+                            sizeName={30}
                             sizeSlider={60}
                             sizeInput={20}
                           />
@@ -639,7 +646,7 @@ function App() {
                             max={8 * chartData.x.length}
                             onChange={handleSliderChange}
                             name={'Sample Count'}
-                            sizeName={20}
+                            sizeName={30}
                             sizeSlider={60}
                             sizeInput={20}
                           />
@@ -652,7 +659,7 @@ function App() {
                             max={(sliderValue / 2) - 1}
                             onChange={handleOffsetSliderChange}
                             name={'Offset'}
-                            sizeName={20}
+                            sizeName={30}
                             sizeSlider={60}
                             sizeInput={20}
                           />
@@ -695,7 +702,7 @@ function App() {
                             step={1}
                             onChange={(event, value) => setCutStartIndex(value)}
                             name="Cut Start"
-                            sizeName={20}
+                            sizeName={30}
                             sizeSlider={60}
                             sizeInput={20}
                           />
@@ -706,7 +713,7 @@ function App() {
                             step={1}
                             onChange={(event, value) => setCutEndIndex(value)}
                             name="Cut End"
-                            sizeName={20}
+                            sizeName={30}
                             sizeSlider={60}
                             sizeInput={20}
                           />
@@ -741,6 +748,9 @@ function App() {
           )}
         </Grid>
       </div>
+      </Grid.Column>
+        </Grid>
+      </Segment>
     </div>
   );
 }

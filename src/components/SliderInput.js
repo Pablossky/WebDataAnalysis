@@ -39,7 +39,7 @@ const SliderInput = ({ value, min, max, step, onChange, name, sizeName, sizeSlid
           flex: sizeInput,
           textAlign: 'center',
           marginLeft: '5%',
-          maxWidth: '15%',
+          maxWidth: '10%',
           color: '#6b6b6b', // Set the input text color to dark gray
         }}
       />

@@ -26,7 +26,7 @@ export default function LowpassFilter({ lowpassFilterEnabled, handleLowpassToggl
               max={2000}
               onChange={handleCutoffFrequency}
               name={'Cutoff Frequency'}
-              sizeName={20}
+              sizeName={30}
               sizeSlider={60}
               sizeInput={20}
             />
@@ -38,7 +38,7 @@ export default function LowpassFilter({ lowpassFilterEnabled, handleLowpassToggl
               max={2000}
               onChange={handleSampleRate}
               name={'Sample Rate'}
-              sizeName={20}
+              sizeName={30}
               sizeSlider={60}
               sizeInput={20}
             />

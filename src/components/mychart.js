@@ -60,7 +60,7 @@ const layout = (title, xlabel, ylabel) => {
   }
 };
 
-const labels = ['Chart', 'xAxis', 'yAxis']
+const labels = ['', 'xAxis', 'yAxis']
 
 function Chart({ data }) {
   const [selectedPoints, setSelectedPoints] = useState({ point1: null, point2: null });
