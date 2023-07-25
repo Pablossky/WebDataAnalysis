@@ -20,6 +20,7 @@ import DataBox from './components/DataBox';
 import LowpassFilter from './components/LowpassFilter';
 import DownloadingData from './components/DownloadingData';
 import Chart from "./components/mychart.js";
+import ToggleSwitch from './components/ToggleSwitch.js';
 
 // useStates
 import {
@@ -85,6 +86,11 @@ function App() {
   const [nextPointData, setNextPointData] = useState(null);
   const [cutStartIndex, setCutStartIndex] = useState(0);
   const [cutEndIndex, setCutEndIndex] = useState(originalChartData.x.length);
+  const [showInput, setShowInput] = useState(true);
+  const [showInterpolation, setShowInterpolation] = useState(true);
+  const [showFilter, setShowFilter] = useState(true);
+  const [showCutting, setShowCutting] = useState(true);
+  const [showDownload, setShowDownload] = useState(true);
 
 
   // Required to parse Excel data
@@ -506,286 +512,236 @@ function App() {
 
         </div>
       </div>
-      {showMenu && (
-        <div className="OptionsPanel">
-          <div className="ui fluid vertical pointing menu">
-            <Button
-              className={`Bookmark ${activeBookmark === 'input' ? 'active' : ''}`}
-              onClick={() => handleBookmarkClick('input')}
-              primary={activeBookmark === 'input'}
-            >
-              Input Options
-            </Button>
-            <Button
-              className={`Bookmark ${activeBookmark === 'cut' ? 'active' : ''}`}
-              onClick={() => handleBookmarkClick('cut')}
-              primary={activeBookmark === 'cut'}
-            >
-              Cut Chart Options
-            </Button>
-            <Button
-              className={`Bookmark ${activeBookmark === 'filter' ? 'active' : ''}`}
-              onClick={() => handleBookmarkClick('filter')}
-              primary={activeBookmark === 'filter'}
-            >
-              Filter Options
-            </Button>
-            <Button
-              className={`Bookmark ${activeBookmark === 'interpolation' ? 'active' : ''}`}
-              onClick={() => handleBookmarkClick('interpolation')}
-              primary={activeBookmark === 'interpolation'}
-            >
-              Interpolation Options
-            </Button>
-            <Button
-              className={`Bookmark ${activeBookmark === 'data' ? 'active' : ''}`}
-              onClick={() => handleBookmarkClick('data')}
-              primary={activeBookmark === 'data'}
-            >
-              Data Tables
-            </Button>
-            <Button
-              className={`Bookmark ${activeBookmark === 'downloading' ? 'active' : ''}`}
-              onClick={() => handleBookmarkClick('downloading')}
-              primary={activeBookmark === 'downloading'}
-            >
-              Downloading Data
-            </Button>
-          </div>
 
-          {activeBookmark === 'input' && (
-            <div className="InputData">
-              <div className="info-button">
-                <Popup
-                  content="Choose data from your computer saved in .xlsx file or paste it from your clipboard."
-                  trigger={
-                    <div className="ui icon button">
-                      <i className="info icon"></i>
-                    </div>
-                  }
-                />
-              </div>
-              <div className="InputFile">
-                Import .xlsx file
-                <div></div>
-                <Input
-                  type="file"
-                  accept=".xlsx, .xls"
-                  onChange={handleFileUpload}
-                />
+      <div className="Menu">
 
-                <div className="Space"></div>
-                Paste data from clipboard
-                <div></div>
-                <Input
-                  className="InputData"
-                  defaultValue="Input data..."
-                  onChange={handlePaste}
-                />
-              </div>
-              <div className="Space"></div>
-
-            </div>
-          )}
-
-          {activeBookmark === 'cut' && (
-            <div className='CutOptions'>
-            <div className="info-button">
-              <Popup
-                content="From there you can CUT the data from start and end."
-                trigger={
-                  <div className="ui icon button">
-                    <i className="info icon"></i>
-                  </div>
-                }
-              />
-            </div>
-            <div className='Space'></div>
-              <SliderInput
-                value={cutStartIndex}
-                min={0}
-                max={originalChartData.x.length - 1}
-                step={1}
-                onChange={(event, value) => setCutStartIndex(value)}
-                name="Cut Start"
-              />
-              <SliderInput
-                value={cutEndIndex}
-                min={0}
-                max={originalChartData.x.length - 1}
-                step={1}
-                onChange={(event, value) => setCutEndIndex(value)}
-                name="Cut End"
-              />
-            </div>
-          )}
-
-          {activeBookmark === 'filter' && (
-            <div className="FilterOptions">
-              <div>
-                <LowpassFilter
-                  lowpassFilterEnabled={lowpassFilterEnabled}
-                  handleLowpassToggle={handleLowpassToggle}
-                  cutoffFrequency={cutoffFrequency}
-                  handleCutoffFrequency={handleCutoffFrequency}
-                  sampleRate={sampleRate}
-                  handleSampleRate={handleSampleRate}
-                />
-              </div>
-            </div>
-          )}
-
-          {activeBookmark === 'interpolation' && (
-            <div className="InterpolationOptions">
-
-
-              <div className="info-button">
-                <Popup
-                  content="
-                  DATA SOURCE decides which operation will be done earlier.
-                  Dropdown menu contains INTERPOLATION METHODS. SAMPLE COUNT changes the number of points presented on the Chart. OFFSET gives us the opportunity to start from a non-first sample when generating the chart, and INTERPOLATION OFFSET allows us to pick the moment when interpolation starts."
-                  trigger={
-                    <div className="ui icon button">
-                      <i className="info icon"></i>
-                    </div>
-                  }
-                />
-              </div>
-              Interpolation method:
-              <Dropdown
-                placeholder="Choose method"
-                selection
-                options={interpolationMethod}
-                value={selectedInterpolation}
-                onChange={handleInterpolationChange}
-              />
-              <div className="Space"></div>
-              Data source:
-              <div className="ui buttons">
-                <button
-                  className={`ui button ${selectedSource === 'dataFile' ? 'active' : ''}`}
-                  onClick={() => handleDataSourceSwitch('dataFile')}
-                >
-                  Original
-                </button>
-                <button
-                  className={`ui button ${selectedSource === 'interpolated' ? 'active' : ''}`}
-                  onClick={() => handleDataSourceSwitch('interpolated')}
-                >
-                  Interpolated
-                </button>
-              </div>
-
-              <div className="slider-container">
-                <SliderInput
-                  value={splitIndex}
-                  min={0}
-                  max={originalChartData.x.length}
-                  onChange={handleSplitSliderChange}
-                  name={'Split Position'}
-                  sizeName={20}
-                  sizeSlider={60}
-                  sizeInput={20}
-                />
-              </div>
-
-              <div className="slider-container">
-                <SliderInput
-                  value={subtractionValue}
-                  min={0}
-                  max={200}
-                  step={0.01}
-                  onChange={handleSubtractionSliderChange}
-                  name={'Subtraction Value'}
-                  sizeName={20}
-                  sizeSlider={60}
-                  sizeInput={20}
-                />
-              </div>
-
-              <div className="Space"></div>
-
-              <div className="slider-container">
-                <SliderInput
-                  value={sliderValue}
-                  min={0}
-                  max={8 * chartData.x.length}
-                  onChange={handleSliderChange}
-                  name={'Sample Count'}
-                  sizeName={20}
-                  sizeSlider={60}
-                  sizeInput={20}
-                />
-              </div>
-
-              <div className="offset-slider-container">
-                <SliderInput
-                  value={offset}
-                  min={0}
-                  max={(sliderValue / 2) - 1}
-                  onChange={handleOffsetSliderChange}
-                  name={'Offset'}
-                  sizeName={20}
-                  sizeSlider={60}
-                  sizeInput={20}
-                />
-              </div>
-
-            </div>
-          )}
-
-          {activeBookmark === 'data' && (
-            <div className="DataTables">
-              <div className="info-button">
-                <Popup
-                  content="ORIGINAL presents imported or pasted data. FILTERED shows original data after applying a lowpass filter (only if this option is turned on). RESAMPLED returns filtered data after applying all modifications."
-                  trigger={
-                    <div className="ui icon button">
-                      <i className="info icon"></i>
-                    </div>
-                  }
-                />
-              </div>
-
-              <div className="Space"></div>
-              <div className="Container">
-                <DataBox
-                  value={renderResampledData(resampledChartData, offset, sampleCount)}
-                  name={'Resampled'}
-                />
-                <DataBox
-                  value={renderData(chartData, originalChartData, selectedSource)}
-                  name={'Original'}
-                />
-                <DataBox
-                  value={renderFilteredData(filteredChartData)}
-                  name={'Filtered'}
-                />
-
-              </div>
-            </div>
-          )}
-
-          {activeBookmark === 'downloading' && (
-            <div className="Downloading">
-              <DownloadingData
-                data1={resampledChartData}
-                data2={chartData}
-                data3={filteredChartData}
-              />
-            </div>
-          )}
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div>Show Input</div>
+          <ToggleSwitch
+            checked={showInput}
+            onChange={() => setShowInput(!showInput)}
+          />
         </div>
-      )}
 
-      <Button
-        className="ToggleMenuButton"
-        onClick={handleToggleMenu}
-        icon={showMenu ? 'expand' : 'align justify'}
-        size="large"
-      />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div>Show Interpolation</div>
+          <ToggleSwitch
+            checked={showInterpolation}
+            onChange={() => setShowInterpolation(!showInterpolation)}
+          />
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div>Show Filter</div>
+          <ToggleSwitch
+            checked={showFilter}
+            onChange={() => setShowFilter(!showFilter)}
+          />
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div>Show Cutting</div>
+          <ToggleSwitch
+            checked={showCutting}
+            onChange={() => setShowCutting(!showCutting)}
+          />
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div>Show Download</div>
+          <ToggleSwitch
+            checked={showDownload}
+            onChange={() => setShowDownload(!showDownload)}
+          />
+        </div>
+        </div>
+
+        <div className="Space"></div>
+
+        {showInput && (
+          <div> Input
+            <Popup
+              content="Choose data from your computer saved in .xlsx file or paste it from your clipboard."
+              position="center"
+              trigger={
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="InputFile" style={{ marginRight: '10px' }}>
+                    <div></div>
+                    <Input
+                      type="file"
+                      accept=".xlsx, .xls"
+                      onChange={handleFileUpload}
+                    />
+                  </div>
+                  <div></div>
+                  <Input
+                    defaultValue="Paste data..."
+                    onChange={handlePaste}
+                  />
+                </div>
+              }
+              hoverable
+            />
+          </div>
+        )}
+
+        <div className="Space"></div>
+
+        {showInterpolation && (
+          <div> Interpolation
+            <Popup
+              content="DATA SOURCE decides which operation will be done earlier. Dropdown menu contains INTERPOLATION METHODS. SAMPLE COUNT changes the number of points presented on the Chart. OFFSET gives us the opportunity to start from a non-first sample when generating the chart, and INTERPOLATION OFFSET allows us to pick the moment when interpolation starts."
+              position="center"
+              trigger={<div>
+                Interpolation method:
+                <Dropdown
+                  placeholder="Choose method"
+                  selection
+                  options={interpolationMethod}
+                  value={selectedInterpolation}
+                  onChange={handleInterpolationChange}
+                />
+
+                <div className="Break"></div>
+
+                <div className="slider-container">
+                  <SliderInput
+                    value={splitIndex}
+                    min={0}
+                    max={originalChartData.x.length}
+                    onChange={handleSplitSliderChange}
+                    name={'Split Position'}
+                    sizeName={20}
+                    sizeSlider={60}
+                    sizeInput={20}
+                  />
+                </div>
+
+                <div className="slider-container">
+                  <SliderInput
+                    value={subtractionValue}
+                    min={0}
+                    max={200}
+                    step={0.01}
+                    onChange={handleSubtractionSliderChange}
+                    name={'Subtraction Value'}
+                    sizeName={20}
+                    sizeSlider={60}
+                    sizeInput={20}
+                  />
+                </div>
+
+                <div className="slider-container">
+                  <SliderInput
+                    value={sliderValue}
+                    min={0}
+                    max={8 * chartData.x.length}
+                    onChange={handleSliderChange}
+                    name={'Sample Count'}
+                    sizeName={20}
+                    sizeSlider={60}
+                    sizeInput={20}
+                  />
+                </div>
+
+                <div className="offset-slider-container">
+                  <SliderInput
+                    value={offset}
+                    min={0}
+                    max={(sliderValue / 2) - 1}
+                    onChange={handleOffsetSliderChange}
+                    name={'Offset'}
+                    sizeName={20}
+                    sizeSlider={60}
+                    sizeInput={20}
+                  />
+                </div>
+              </div>
+              }
+              hoverable
+            />
+          </div>
+        )}
+
+        <div className='Space'></div>
+
+        {showFilter && (
+          <div> Filter
+            <LowpassFilter
+              lowpassFilterEnabled={lowpassFilterEnabled}
+              handleLowpassToggle={handleLowpassToggle}
+              cutoffFrequency={cutoffFrequency}
+              handleCutoffFrequency={handleCutoffFrequency}
+              sampleRate={sampleRate}
+              handleSampleRate={handleSampleRate}
+            />
+          </div>
+        )}
+
+        <div className='Space'></div>
+
+        {showCutting && (
+          <div> Cutting
+            <Popup
+              content="From there you can CUT the data from start and end."
+              position="center"
+              trigger={
+                <div>
+                  <SliderInput
+                    value={cutStartIndex}
+                    min={0}
+                    max={originalChartData.x.length - 1}
+                    step={1}
+                    onChange={(event, value) => setCutStartIndex(value)}
+                    name="Cut Start"
+                    sizeName={20}
+                    sizeSlider={60}
+                    sizeInput={20}
+                  />
+                  <SliderInput
+                    value={cutEndIndex}
+                    min={0}
+                    max={originalChartData.x.length - 1}
+                    step={1}
+                    onChange={(event, value) => setCutEndIndex(value)}
+                    name="Cut End"
+                    sizeName={20}
+                    sizeSlider={60}
+                    sizeInput={20}
+                  />
+                </div>
+              }
+              hoverable
+            />
+          </div>
+        )}
+
+        <div className='Space'></div>
+
+        {showDownload && (
+          <div> Download
+            <Popup
+              content="You can download data from here."
+              position="center"
+              trigger={
+                <div>
+                  <DownloadingData
+                    data1={resampledChartData}
+                    data2={chartData}
+                    data3={filteredChartData}
+                    buttonWidth={200}
+                  />
+                </div>
+              }
+              hoverable
+            />
+          </div>
+        )}
+      </div>
     </div>
-  );
+  )
 }
+
 
 export default App;

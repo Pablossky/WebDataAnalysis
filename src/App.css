@@ -45,16 +45,12 @@
   width: 55%;
 }
 
-.Data1 {
-  float: left;
-  text-align: center;
-  margin: 10px;
-  width: 60%;
-  font-size: x-large;
-}
-
 .Space {
   margin-top: 60px;
+}
+
+.Break {
+  margin-top: 20px;
 }
 
 .InputFile {
@@ -66,31 +62,14 @@
   margin-left: 60px;
 }
 
-.InputData {
-  overflow: visible;
-  padding: 50px;
-  font-size: 14pt;
-}
-
-.FilterOptions {
-  padding: 50px;
-}
-
-.CutOptions {
-  padding: 50px;
-}
-
-.InterpolationOptions {
+.Menu {
+  float: right;
+  margin-top: 5%;
+  margin-right: 15%;
+  max-width: 30%;
   padding-top: 200px;
   padding: 50px;
-}
-
-.DataTables {
-  padding: 50px;
-}
-
-.Downloading {
-  padding: 50px;
+  background-color: #f1f1f1;
 }
 
 .FunctionalButton {
@@ -100,30 +79,4 @@
 
 .Container {
   display: flex;
-}
-
-.Box {
-  width: 400px;
-  height: 300px;
-  overflow: auto;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 10px;
-  margin-left: 10px;
-  background-color: #d3d3d3;
-}
-
-.toolcool-range-slider:host {
-  width: 380px;
-}
-
-.info-button {
-  position: absolute;
-  right: 0;
-  margin-right: 5%;
-}
-
-.ToggleMenuButton {
-  position: absolute;
-  top: 20px;
 }
