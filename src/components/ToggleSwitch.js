@@ -1,12 +1,13 @@
+// ToggleSwitch.js
 import React from 'react';
+import './ToggleSwitchStyle.css';
 
 const ToggleSwitch = ({ label, checked, onChange }) => {
   return (
-    <div style={{ display: 'flex', alignItems: 'center' }}>
-      <label style={{ marginRight: '10px' }}>{label}</label>
-      <div className="ui toggle checkbox">
-        <input type="checkbox" checked={checked} onChange={onChange} />
-        <label></label>
+    <div className="toggle-switch-container">
+      <label className="toggle-switch-label">{label}</label>
+      <div className={`toggle-switch ${checked ? 'checked' : ''}`} onClick={() => onChange(!checked)}>
+        <div className="toggle-switch-thumb" />
       </div>
     </div>
   );

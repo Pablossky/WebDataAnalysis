@@ -33,14 +33,42 @@ const DownloadingData = ({ data1, data2, data3, buttonWidth }) => {
   };
 
   const downloadOptions = [
-    // options remain the same
+    {
+      key: 'downloadResampled',
+      text: 'Download resampled data in .txt',
+      onClick: handleDownloadResampled,
+    },
+    {
+      key: 'downloadOriginal',
+      text: 'Download original data in .txt',
+      onClick: handleDownloadOriginal,
+    },
+    {
+      key: 'downloadFiltered',
+      text: 'Download filtered data in .txt',
+      onClick: handleDownloadFiltered,
+    },
+    {
+      key: 'copyResampled',
+      text: 'Copy resampled data to clipboard',
+      onClick: handleCopyResampled,
+    },
+    {
+      key: 'copyOriginal',
+      text: 'Copy original data to clipboard',
+      onClick: handleCopyOriginal,
+    },
+    {
+      key: 'copyFiltered',
+      text: 'Copy filtered data to clipboard',
+      onClick: handleCopyFiltered,
+    },
   ];
 
   const buttonStyle = {
     width: buttonWidth,
   };
 
-  // Style to center the button vertically and horizontally
   const containerStyle = {
     display: 'flex',
     alignItems: 'center',
@@ -49,7 +77,6 @@ const DownloadingData = ({ data1, data2, data3, buttonWidth }) => {
 
   return (
     <div>
-      {/* Center the button */}
       <div style={containerStyle}>
         <Dropdown
           className="FunctionalButton"

@@ -17,6 +17,7 @@ const SliderInput = ({ value, min, max, step, onChange, name, sizeName, sizeSlid
         flexDirection: 'row',
         alignItems: 'center',
         marginBottom: '10px',
+        color: '#6b6b6b', // Set the text color to dark gray
       }}
     >
       <span style={{ fontSize: '14px', flex: sizeName }}>{name}</span>
@@ -27,14 +28,20 @@ const SliderInput = ({ value, min, max, step, onChange, name, sizeName, sizeSlid
         step={step}
         onChange={handleSliderChange}
         aria-labelledby="continuous-slider"
-        style={{ flex: sizeSlider }}
+        style={{ flex: sizeSlider, color: '#6b6b6b' }} // Set the slider color to dark gray
       />
       <input
         className="slider-input"
         type="number"
         value={value}
         onChange={handleInputChange}
-        style={{ flex: sizeInput, textAlign: 'center', marginLeft: '5%', maxWidth: '15%' }}
+        style={{
+          flex: sizeInput,
+          textAlign: 'center',
+          marginLeft: '5%',
+          maxWidth: '15%',
+          color: '#6b6b6b', // Set the input text color to dark gray
+        }}
       />
     </div>
   );

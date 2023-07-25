@@ -1,0 +1,87 @@
+.slider-input-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .slider-input-label {
+    font-size: 14px;
+    flex: 1;
+  }
+  
+  .slider-input-slider {
+    flex: 6;
+  }
+  
+  .slider-input-number {
+    flex: 3;
+    text-align: center;
+    margin-left: 5%;
+    max-width: 15%;
+  }
+  
+  /* Customize the MUI Slider Thumb */
+  .MuiSlider-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 2px solid darkgray;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+    transition: transform 0.2s;
+  }
+  
+  /* Customize the MUI Slider Rail */
+  .MuiSlider-rail {
+    height: 6px;
+    border-radius: 10px;
+    background-color: lightgray;
+  }
+  
+  /* Customize the MUI Slider Track */
+  .MuiSlider-track {
+    height: 6px;
+    border-radius: 10px;
+    background-color: darkgray;
+  }
+
+  /* ToggleSwitchStyle.css */
+
+.toggle-switch-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .toggle-switch-label {
+    margin-right: 10px;
+    font-size: 14px;
+  }
+  
+  .toggle-switch {
+    width: 46px;
+    height: 20px;
+    background-color: lightgray;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .toggle-switch.checked {
+    background-color: darkgray;
+  }
+  
+  .toggle-switch-thumb {
+    width: 16px;
+    height: 16px;
+    background-color: #fff;
+    border-radius: 50%;
+    margin: 2px;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+    transition: transform 0.3s;
+  }
+  
+  .toggle-switch.checked .toggle-switch-thumb {
+    transform: translateX(23px);
+  }
+  
