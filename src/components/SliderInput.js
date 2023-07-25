@@ -1,7 +1,7 @@
 import React from 'react';
 import Slider from '@mui/material/Slider';
 
-const SliderInput = ({ value, min, max, step, onChange, name }) => {
+const SliderInput = ({ value, min, max, step, onChange, name, sizeName, sizeSlider, sizeInput }) => {
   const handleSliderChange = (event, newValue) => {
     onChange(event, newValue);
   };
@@ -11,8 +11,15 @@ const SliderInput = ({ value, min, max, step, onChange, name }) => {
   };
 
   return (
-    <div className="slider-input-container">
-      <th>{name}</th>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: '10px',
+      }}
+    >
+      <span style={{ fontSize: '14px', flex: sizeName }}>{name}</span>
       <Slider
         value={value}
         min={min}
@@ -20,12 +27,14 @@ const SliderInput = ({ value, min, max, step, onChange, name }) => {
         step={step}
         onChange={handleSliderChange}
         aria-labelledby="continuous-slider"
+        style={{ flex: sizeSlider }}
       />
       <input
         className="slider-input"
         type="number"
         value={value}
         onChange={handleInputChange}
+        style={{ flex: sizeInput, textAlign: 'center', marginLeft: '5%', maxWidth: '15%' }}
       />
     </div>
   );

@@ -83,6 +83,8 @@ function App() {
   });
   const [highestDerivativeLineData, setHighestDerivativeLineData] = useState(null);
   const [nextPointData, setNextPointData] = useState(null);
+  const [cutStartIndex, setCutStartIndex] = useState(0);
+  const [cutEndIndex, setCutEndIndex] = useState(originalChartData.x.length);
 
 
   // Required to parse Excel data
@@ -124,9 +126,13 @@ function App() {
     ? {
       ...chartData,
       name: 'Lowpass filter',
-      y: applyLowpassFilter(originalChartData.y, cutoffFrequency, sampleRate),
+      y: applyLowpassFilter(originalChartData.y.slice(cutStartIndex, cutEndIndex), cutoffFrequency, sampleRate),
     }
-    : chartData;
+    : {
+      ...chartData,
+      x: chartData.x.slice(cutStartIndex, cutEndIndex),
+      y: chartData.y.slice(cutStartIndex, cutEndIndex),
+    };
 
   const applySubtraction = (data, value) => {
     const { x, y } = data;
@@ -213,6 +219,10 @@ function App() {
     setSplitIndex(value);
 
     const { x, y } = chartData;
+
+    setCutStartIndex(value);
+    setCutEndIndex(x.length);
+
     setChartData({
       name: 'Your Data',
       x: filteredChartData.x.slice(0, value).concat(x.slice(value)),
@@ -582,7 +592,7 @@ function App() {
             <div className='CutOptions'>
             <div className="info-button">
               <Popup
-                content="To do: przycinanie z kazdej strony"
+                content="From there you can CUT the data from start and end."
                 trigger={
                   <div className="ui icon button">
                     <i className="info icon"></i>
@@ -590,6 +600,23 @@ function App() {
                 }
               />
             </div>
+            <div className='Space'></div>
+              <SliderInput
+                value={cutStartIndex}
+                min={0}
+                max={originalChartData.x.length - 1}
+                step={1}
+                onChange={(event, value) => setCutStartIndex(value)}
+                name="Cut Start"
+              />
+              <SliderInput
+                value={cutEndIndex}
+                min={0}
+                max={originalChartData.x.length - 1}
+                step={1}
+                onChange={(event, value) => setCutEndIndex(value)}
+                name="Cut End"
+              />
             </div>
           )}
 
@@ -656,6 +683,9 @@ function App() {
                   max={originalChartData.x.length}
                   onChange={handleSplitSliderChange}
                   name={'Split Position'}
+                  sizeName={20}
+                  sizeSlider={60}
+                  sizeInput={20}
                 />
               </div>
 
@@ -667,18 +697,14 @@ function App() {
                   step={0.01}
                   onChange={handleSubtractionSliderChange}
                   name={'Subtraction Value'}
+                  sizeName={20}
+                  sizeSlider={60}
+                  sizeInput={20}
                 />
               </div>
 
               <div className="Space"></div>
-              <div className="ShowOption">
-                <input
-                  type="checkbox"
-                  checked={showSelectedArea}
-                  onChange={handleShowSelectedArea}
-                />
-                Show point with the highest derivative
-              </div>
+
               <div className="slider-container">
                 <SliderInput
                   value={sliderValue}
@@ -686,6 +712,9 @@ function App() {
                   max={8 * chartData.x.length}
                   onChange={handleSliderChange}
                   name={'Sample Count'}
+                  sizeName={20}
+                  sizeSlider={60}
+                  sizeInput={20}
                 />
               </div>
 
@@ -696,19 +725,12 @@ function App() {
                   max={(sliderValue / 2) - 1}
                   onChange={handleOffsetSliderChange}
                   name={'Offset'}
+                  sizeName={20}
+                  sizeSlider={60}
+                  sizeInput={20}
                 />
               </div>
 
-              <div className="slider-container">
-                <SliderInput
-                  value={interpolationOffset}
-                  min={0}
-                  max={sampleCount - 1}
-                  step={1}
-                  onChange={handleInterpolationOffsetChange}
-                  name={'Interpolation offset'}
-                />
-              </div>
             </div>
           )}
 
