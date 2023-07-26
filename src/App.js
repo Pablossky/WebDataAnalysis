@@ -11,7 +11,6 @@ import applyLowpassFilter from './functionality/lowpassFilter.js';
 import interpolateArray from './functionality/interpolateArray.js';
 import "./functionality/dataManagement.js";
 import "./functionality/plottingData.js";
-import calculateDerivative from './functionality/calculateDerivative.js';
 
 // Components
 import SliderInput from './components/SliderInput';
@@ -32,12 +31,8 @@ import {
   useSampleRate,
   useOriginalChartData,
   useChartData,
-  useResampledChartData,
   useSelectedInterpolation,
   useOffsettedChartData,
-  useShowSelectedArea,
-  useShowMenu,
-  useSelectedArea,
 } from './hooks/useStates.js';
 
 // ------------------------------------------CODE-----------------------------------------------
@@ -160,7 +155,6 @@ function App() {
     handleDataSourceSwitch(selectedSource);
   }, [swapXY]);
 
-
   //-----------------------------------------HANDLE-------------------------------------------
 
   const handleFileUpload = (e) => {
@@ -268,7 +262,6 @@ function App() {
     setInterpolatedChartData(interpolatedData);
 
   };
-
 
   const handleSliderChange = (event, value) => {
     setSliderValue(value);
@@ -545,10 +538,12 @@ function App() {
                         hoverable
                       />
 
-                      <div className="Space"></div>
+                      <div className="Break"></div>
 
                       {showInput && (
-                        <div> Input
+                        <div>
+                          <hr style={{ margin: '10px 0', borderTop: '1px solid #ccc' }} />
+                          <strong>Input</strong>
                           <Popup
                             content="Toggle to swap X and Y arrays on the chart"
                             position="center"
@@ -591,10 +586,12 @@ function App() {
                         </div>
                       )}
 
-                      <div className="Space"></div>
+                      <div className="Break"></div>
 
                       {showInterpolation && (
-                        <div> Interpolation
+                        <div>
+                          <hr style={{ margin: '10px 0', borderTop: '1px solid #ccc' }} />
+                          <strong>Interpolation</strong>
                           <Popup
                             content="DATA SOURCE decides which operation will be done earlier. Dropdown menu contains INTERPOLATION METHODS. SAMPLE COUNT changes the number of points presented on the Chart. OFFSET gives us the opportunity to start from a non-first sample when generating the chart, and INTERPOLATION OFFSET allows us to pick the moment when interpolation starts."
                             position="center"
@@ -669,10 +666,12 @@ function App() {
                         </div>
                       )}
 
-                      <div className='Space'></div>
+                      <div className='Break'></div>
 
                       {showFilter && (
-                        <div> Filter
+                        <div>
+                          <hr style={{ margin: '10px 0', borderTop: '1px solid #ccc' }} />
+                          <strong>Filter</strong>
                           <LowpassFilter
                             lowpassFilterEnabled={lowpassFilterEnabled}
                             handleLowpassToggle={handleLowpassToggle}
@@ -684,10 +683,12 @@ function App() {
                         </div>
                       )}
 
-                      <div className='Space'></div>
+                      <div className='Break'></div>
 
                       {showCutting && (
-                        <div> Cutting
+                        <div>
+                          <hr style={{ margin: '10px 0', borderTop: '1px solid #ccc' }} />
+                          <strong>Cutting</strong>
                           <Popup
                             content="From there you can CUT the data from start and end."
                             position="center"
@@ -722,7 +723,7 @@ function App() {
                         </div>
                       )}
 
-                      <div className='Space'></div>
+                      <div className='Break'></div>
 
                       <div>
                         <Popup
@@ -730,6 +731,8 @@ function App() {
                           position="center"
                           trigger={
                             <div>
+                              <hr style={{ margin: '10px 0', borderTop: '1px solid #ccc' }} />
+                              <div className='Break'></div>
                               <DownloadingData
                                 data1={resampledChartData}
                                 data2={chartData}
