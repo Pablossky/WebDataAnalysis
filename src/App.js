@@ -11,6 +11,7 @@ import applyLowpassFilter from './functionality/lowpassFilter.js';
 import interpolateArray from './functionality/interpolateArray.js';
 import "./functionality/dataManagement.js";
 import "./functionality/plottingData.js";
+import applySubtraction from './functionality/applySubtraction.js';
 
 // Components
 import SliderInput from './components/SliderInput';
@@ -130,12 +131,6 @@ function App() {
       y: chartData.y.slice(cutStartIndex, cutEndIndex),
     };
 
-  const applySubtraction = (data, value) => {
-    const { x, y } = data;
-    const subtractedY = y.map((yValue) => yValue - value);
-    return { name: 'Subtracted', x, y: subtractedY };
-  };
-
   //---------------------------------------USE_EFFECT-----------------------------------------
 
   useEffect(() => {
@@ -149,11 +144,11 @@ function App() {
   useEffect(() => {
     const { x, y } = originalChartData;
     setOriginalCopyData({ name: 'Copy of Original', x: [...x], y: [...y] });
-  }, [originalChartData]);
+  }, [originalChartData]);  // Making copy of original data
 
   useEffect(() => {
     handleDataSourceSwitch(selectedSource);
-  }, [swapXY]);
+  }, [swapXY]); // Swapping axes
 
   //-----------------------------------------HANDLE-------------------------------------------
 
@@ -190,10 +185,9 @@ function App() {
 
   const handleSubtractionSliderChange = (event, value) => {
     setSubtractionValue(value);
-    // Apply subtraction to the resampledChartData and update the chart data
     const modifiedChartData = applySubtraction(resampledChartData, value);
     setSubtractedChartData(modifiedChartData);
-  };
+  }; // Ok
 
   const handleSplitSliderChange = (event, value) => {
     setSplitIndex(value);
@@ -218,7 +212,7 @@ function App() {
       x: splitDataX,
       y: splitDataY,
     });
-  };
+  }; // Ok
 
   const handleInterpolation = () => {
     const { x, y } = filteredChartData;
@@ -236,7 +230,7 @@ function App() {
       const { x: akimaInterpolatedX, y: akimaInterpolatedY } = akimaInterpolate(
         x,
         y,
-        resampledChartData.x // Use resampledChartData.x instead of numValues
+        resampledChartData.x
       );
 
       interpolatedX = akimaInterpolatedX.slice(startIndex, endIndex);
@@ -261,7 +255,7 @@ function App() {
 
     setInterpolatedChartData(interpolatedData);
 
-  };
+  }; // ToDo Akima
 
   const handleSliderChange = (event, value) => {
     setSliderValue(value);
@@ -342,14 +336,12 @@ function App() {
     setSelectedSource(value);
 
     if (value === 'dataFile') {
-      // Swap X and Y arrays if 'swapXY' is true
       const dataX = swapXY ? originalChartData.y : originalChartData.x;
       const dataY = swapXY ? originalChartData.x : originalChartData.y;
 
       setChartData({ name: 'dataFile', x: dataX, y: dataY });
       setOriginalChartData({ name: 'dataFile', x: dataX, y: dataY });
 
-      // Update other datasets with swapped X and Y arrays
       setResampledChartData({
         ...resampledChartData,
         x: swapXY ? resampledChartData.y : resampledChartData.x,
@@ -371,14 +363,12 @@ function App() {
         y: swapXY ? splitDataChartData.x : splitDataChartData.y,
       });
     } else if (value === 'default') {
-      // Swap X and Y arrays if 'swapXY' is true
       const defaultX = swapXY ? [1, 2, 1, 2] : [1, 2, 3, 4];
       const defaultY = swapXY ? [1, 2, 3, 4] : [1, 2, 1, 2];
 
       setChartData({ name: 'default', x: defaultX, y: defaultY });
       setOriginalChartData({ name: 'default', x: defaultX, y: defaultY });
 
-      // Update other datasets with swapped X and Y arrays
       setResampledChartData({
         ...resampledChartData,
         x: swapXY ? resampledChartData.y : resampledChartData.x,
@@ -400,7 +390,6 @@ function App() {
         y: swapXY ? splitDataChartData.x : splitDataChartData.y,
       });
     } else if (value === 'interpolated') {
-      // Swap X and Y arrays if 'swapXY' is true
       const { x, y } = interpolateArray(
         swapXY ? originalChartData.y : originalChartData.x,
         swapXY ? originalChartData.x : originalChartData.y,
@@ -421,7 +410,6 @@ function App() {
         y: interpolatedY.slice(interpolationStart, interpolationEnd),
       });
 
-      // Update other datasets with swapped X and Y arrays
       setResampledChartData({
         ...resampledChartData,
         x: swapXY ? resampledChartData.y : resampledChartData.x,
@@ -438,7 +426,7 @@ function App() {
         y: swapXY ? splitDataChartData.x : splitDataChartData.y,
       });
     }
-  };
+  }; // Ok, it's that long because of method I used to swap axes
 
   const handlePaste = (event) => {
     const clipboardData = event.clipboardData || window.clipboardData;
