@@ -46,7 +46,6 @@ function App() {
   const { selectedInterpolation, setSelectedInterpolation } = useSelectedInterpolation('linear');
   const { selectedSource, setSelectedSource } = useSelectedSource('dataFile');
   const { offset, setOffset } = useOffset(0);
-  const { interpolationOffset, setInterpolationOffset } = useInterpolationOffset(0);
   const { lowpassFilterEnabled, setLowpassEnabled } = useLowpassEnabled(false);
   const { cutoffFrequency, setCutoffFrequency } = useCutoffFrequency(1000);
   const { sampleRate, setSampleRate } = useSampleRate(1000);
@@ -139,7 +138,7 @@ function App() {
       const modifiedChartData = applySubtraction(originalChartData, subtractionValue);
       setSubtractedChartData(modifiedChartData);
     }
-  }, [lowpassFilterEnabled, chartData, interpolationOffset, splitIndex, originalChartData, subtractFromOriginal, subtractionValue]);
+  }, [lowpassFilterEnabled, chartData, splitIndex, originalChartData, subtractFromOriginal, subtractionValue]);
 
   useEffect(() => {
     const { x, y } = originalChartData;
@@ -395,13 +394,12 @@ function App() {
         swapXY ? originalChartData.x : originalChartData.y,
         originalChartData.x.length,
         selectedInterpolation,
-        interpolationOffset
       );
 
       const interpolatedX = swapXY ? y : x;
       const interpolatedY = swapXY ? x : y;
 
-      const interpolationStart = Math.round(interpolationOffset * (interpolatedX.length - 1));
+      const interpolationStart = Math.round((interpolatedX.length - 1));
       const interpolationEnd = interpolatedX.length;
 
       setChartData({
