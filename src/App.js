@@ -3,7 +3,7 @@
 import 'toolcool-range-slider';
 import 'semantic-ui-css/semantic.min.css';
 import React, { useState, useEffect } from 'react';
-import { Dropdown, Popup, Input, Button, Grid, Segment } from 'semantic-ui-react';
+import { Dropdown, Popup, Input, Grid, Segment } from 'semantic-ui-react';
 
 // Functionality
 import akimaInterpolate from './functionality/akimaInterpolation.js';
@@ -11,12 +11,10 @@ import applyLowpassFilter from './functionality/lowpassFilter.js';
 import interpolateArray from './functionality/interpolateArray.js';
 import "./functionality/dataManagement.js";
 import "./functionality/plottingData.js";
-import { renderData, renderFilteredData, renderResampledData } from "./functionality/renderingData.js";
 import calculateDerivative from './functionality/calculateDerivative.js';
 
 // Components
 import SliderInput from './components/SliderInput';
-import DataBox from './components/DataBox';
 import LowpassFilter from './components/LowpassFilter';
 import DownloadingData from './components/DownloadingData';
 import Chart from "./components/mychart.js";
@@ -38,7 +36,6 @@ import {
   useSelectedInterpolation,
   useOffsettedChartData,
   useShowSelectedArea,
-  useActiveBookmark,
   useShowMenu,
   useSelectedArea,
 } from './hooks/useStates.js';
@@ -62,16 +59,16 @@ function App() {
     x: [1, 2, 3, 4],
     y: [1, 2, 1, 2]
   });
-  const { chartData, setChartData } = useChartData(originalChartData);
-  const { resampledChartData, setResampledChartData } = useResampledChartData(originalChartData);
+  const { chartData, setChartData } = useChartData(originalChartData); const [resampledChartData, setResampledChartData] = useState({
+    name: 'Resampling',
+    x: [],
+    y: [],
+  });
   const { offsettedChartData, setOffsettedChartData } = useOffsettedChartData({
     name: 'offsetted',
     x: [],
     y: []
   });
-  const { showSelectedArea, setShowSelectedArea } = useShowSelectedArea(false);
-  const { showMenu, setShowMenu } = useShowMenu(true);
-  const { selectedArea, setSelectedArea } = useSelectedArea({});
   const [splitIndex, setSplitIndex] = useState(originalChartData.x.length / 2);
   const [originalCopyData, setOriginalCopyData] = useState({ name: 'Copy of Original', x: [], y: [] });
   const [subtractionValue, setSubtractionValue] = useState(0.0);
@@ -88,6 +85,7 @@ function App() {
   const [showInterpolation, setShowInterpolation] = useState(true);
   const [showFilter, setShowFilter] = useState(true);
   const [showCutting, setShowCutting] = useState(true);
+  const [swapXY, setSwapXY] = useState(false);
 
 
   // Required to parse Excel data
@@ -143,7 +141,6 @@ function App() {
     return { name: 'Subtracted', x, y: subtractedY };
   };
 
-
   //---------------------------------------USE_EFFECT-----------------------------------------
 
   useEffect(() => {
@@ -158,6 +155,11 @@ function App() {
     const { x, y } = originalChartData;
     setOriginalCopyData({ name: 'Copy of Original', x: [...x], y: [...y] });
   }, [originalChartData]);
+
+  useEffect(() => {
+    handleDataSourceSwitch(selectedSource);
+  }, [swapXY]);
+
 
   //-----------------------------------------HANDLE-------------------------------------------
 
@@ -204,7 +206,7 @@ function App() {
 
     const { x, y } = chartData;
 
-    setCutStartIndex(value);
+    setCutStartIndex(0);
     setCutEndIndex(x.length);
 
     setChartData({
@@ -213,14 +215,12 @@ function App() {
       y: filteredChartData.y.slice(0, value).concat(y.slice(value)),
     });
 
-    // Create a copy of originalChartData for displaying Split Data
     const splitDataX = filteredChartData.x.slice(value);
     const splitDataY = filteredChartData.y.slice(value);
 
     setSplitDataChartData({
       ...filteredChartData,
       name: 'Split Data',
-      borderColor: 'red', // Set the border color to red for Split Data
       x: splitDataX,
       y: splitDataY,
     });
@@ -267,9 +267,8 @@ function App() {
 
     setInterpolatedChartData(interpolatedData);
 
-    // Select and display the area on the chart
-    handleSelectArea(startIndex, endIndex);
-  }; // ToDo Akima
+  };
+
 
   const handleSliderChange = (event, value) => {
     setSliderValue(value);
@@ -350,21 +349,75 @@ function App() {
     setSelectedSource(value);
 
     if (value === 'dataFile') {
-      setChartData({
-        name: 'dataFile',
-        x: originalChartData.x,
-        y: originalChartData.y,
+      // Swap X and Y arrays if 'swapXY' is true
+      const dataX = swapXY ? originalChartData.y : originalChartData.x;
+      const dataY = swapXY ? originalChartData.x : originalChartData.y;
+
+      setChartData({ name: 'dataFile', x: dataX, y: dataY });
+      setOriginalChartData({ name: 'dataFile', x: dataX, y: dataY });
+
+      // Update other datasets with swapped X and Y arrays
+      setResampledChartData({
+        ...resampledChartData,
+        x: swapXY ? resampledChartData.y : resampledChartData.x,
+        y: swapXY ? resampledChartData.x : resampledChartData.y,
+      });
+      setOffsettedChartData({
+        ...offsettedChartData,
+        x: swapXY ? offsettedChartData.y : offsettedChartData.x,
+        y: swapXY ? offsettedChartData.x : offsettedChartData.y,
+      });
+      setInterpolatedChartData({
+        ...interpolatedChartData,
+        x: swapXY ? interpolatedChartData.y : interpolatedChartData.x,
+        y: swapXY ? interpolatedChartData.x : interpolatedChartData.y,
+      });
+      setSplitDataChartData({
+        ...splitDataChartData,
+        x: swapXY ? splitDataChartData.y : splitDataChartData.x,
+        y: swapXY ? splitDataChartData.x : splitDataChartData.y,
       });
     } else if (value === 'default') {
-      setChartData({ name: 'default', x: [1, 2, 3, 4], y: [1, 2, 1, 2] });
+      // Swap X and Y arrays if 'swapXY' is true
+      const defaultX = swapXY ? [1, 2, 1, 2] : [1, 2, 3, 4];
+      const defaultY = swapXY ? [1, 2, 3, 4] : [1, 2, 1, 2];
+
+      setChartData({ name: 'default', x: defaultX, y: defaultY });
+      setOriginalChartData({ name: 'default', x: defaultX, y: defaultY });
+
+      // Update other datasets with swapped X and Y arrays
+      setResampledChartData({
+        ...resampledChartData,
+        x: swapXY ? resampledChartData.y : resampledChartData.x,
+        y: swapXY ? resampledChartData.x : resampledChartData.y,
+      });
+      setOffsettedChartData({
+        ...offsettedChartData,
+        x: swapXY ? offsettedChartData.y : offsettedChartData.x,
+        y: swapXY ? offsettedChartData.x : offsettedChartData.y,
+      });
+      setInterpolatedChartData({
+        ...interpolatedChartData,
+        x: swapXY ? interpolatedChartData.y : interpolatedChartData.x,
+        y: swapXY ? interpolatedChartData.x : interpolatedChartData.y,
+      });
+      setSplitDataChartData({
+        ...splitDataChartData,
+        x: swapXY ? splitDataChartData.y : splitDataChartData.x,
+        y: swapXY ? splitDataChartData.x : splitDataChartData.y,
+      });
     } else if (value === 'interpolated') {
-      const { x: interpolatedX, y: interpolatedY } = interpolateArray(
-        originalChartData.x,
-        originalChartData.y,
+      // Swap X and Y arrays if 'swapXY' is true
+      const { x, y } = interpolateArray(
+        swapXY ? originalChartData.y : originalChartData.x,
+        swapXY ? originalChartData.x : originalChartData.y,
         originalChartData.x.length,
         selectedInterpolation,
         interpolationOffset
       );
+
+      const interpolatedX = swapXY ? y : x;
+      const interpolatedY = swapXY ? x : y;
 
       const interpolationStart = Math.round(interpolationOffset * (interpolatedX.length - 1));
       const interpolationEnd = interpolatedX.length;
@@ -374,8 +427,25 @@ function App() {
         x: interpolatedX.slice(interpolationStart, interpolationEnd),
         y: interpolatedY.slice(interpolationStart, interpolationEnd),
       });
+
+      // Update other datasets with swapped X and Y arrays
+      setResampledChartData({
+        ...resampledChartData,
+        x: swapXY ? resampledChartData.y : resampledChartData.x,
+        y: swapXY ? resampledChartData.x : resampledChartData.y,
+      });
+      setOffsettedChartData({
+        ...offsettedChartData,
+        x: swapXY ? offsettedChartData.y : offsettedChartData.x,
+        y: swapXY ? offsettedChartData.x : offsettedChartData.y,
+      });
+      setSplitDataChartData({
+        ...splitDataChartData,
+        x: swapXY ? splitDataChartData.y : splitDataChartData.x,
+        y: swapXY ? splitDataChartData.x : splitDataChartData.y,
+      });
     }
-  }; // ToChange
+  };
 
   const handlePaste = (event) => {
     const clipboardData = event.clipboardData || window.clipboardData;
@@ -401,81 +471,17 @@ function App() {
     event.preventDefault();
   }; // Ok
 
-  const handleSelectArea = (startIndex, endIndex) => {
-    const { x, y } = chartData;
-
-    const selectedX = x.slice(startIndex, endIndex);
-    const selectedY = y.slice(startIndex, endIndex);
-
-    const selectedChartData = {
-      name: 'Selected Area',
-      x: selectedX,
-      y: selectedY,
-    };
-
-    let areaData = selectedChartData;
-
-    if (showSelectedArea && selectedSource !== 'interpolated') {
-      const derivative = calculateDerivative(selectedY);
-      const maxDerivativeValue = Math.max(...derivative);
-      const maxDerivativeIndex = derivative.indexOf(maxDerivativeValue);
-
-      const start = startIndex + maxDerivativeIndex;
-      const end = startIndex + maxDerivativeIndex + 1;
-
-      const highestIncomeX = x.slice(start, end);
-      const highestIncomeY = y.slice(start, end);
-
-      const highestIncomeArea = {
-        name: 'Highest Derivative',
-        x: highestIncomeX,
-        y: highestIncomeY,
-      };
-
-      areaData = highestIncomeArea;
-
-      if (end < x.length) {
-        const highestDerivativeLineData = {
-          datasets: [{
-            label: 'Highest Derivative Line',
-            data: [
-              { x: highestIncomeX[0], y: highestIncomeY[0] },
-              { x: x[end], y: y[end] },
-            ],
-            fill: false,
-            borderColor: 'red',
-            borderWidth: 2,
-            borderDash: [5, 5],
-          }],
-        };
-
-        const nextPointData = {
-          datasets: [{
-            label: 'Next Point',
-            data: [{ x: x[end], y: y[end] }],
-            backgroundColor: 'red',
-            borderColor: 'red',
-            pointRadius: 5,
-            pointHoverRadius: 7,
-          }],
-        };
-      }
-    }
-
-    setSelectedArea(showSelectedArea ? areaData : {});
-  };
-
   //----------------------------------------------APP-------------------------------------------------------
 
   return (
     <div className="App" style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5' }}>
       <Segment style={{ width: '70%', background: '#fff', display: 'flex', alignItems: 'stretch', border: '1px solid #ccc' }}>
         <Grid columns={1} divided centered style={{ flex: 1 }}>
-          <Grid.Column textAlign="center" width={showMenu ? 16 : 16}>
+          <Grid.Column textAlign="center" width={16}>
 
             <div style={{ width: '100%', display: 'flex', alignItems: 'stretch', background: '#fff' }}>
               <Grid columns={2} divided centered style={{ flex: 1 }}>
-                <Grid.Column textAlign="center" width={showMenu ? 10 : 16}>
+                <Grid.Column textAlign="center" width={10}>
                   <Segment style={{ background: '#fff', border: '1px solid #ccc' }}>
                     <h1>Chart</h1>
                     <Chart
@@ -492,7 +498,7 @@ function App() {
                     />
                   </Segment>
                 </Grid.Column>
-                {showMenu && (
+                {(
                   <Grid.Column textAlign="center" width={5}>
                     <Segment style={{ background: '#fff', border: '1px solid #ccc', height: '100%', maxHeight: '100%', overflow: 'auto' }}>
                       <h1>Context menu</h1>
@@ -543,6 +549,23 @@ function App() {
 
                       {showInput && (
                         <div> Input
+                          <Popup
+                            content="Toggle to swap X and Y arrays on the chart"
+                            position="center"
+                            trigger={
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <div style={{ marginBottom: '5px' }}>Swap X and Y</div>
+                                <ToggleSwitch
+                                  checked={swapXY}
+                                  onChange={() => setSwapXY(!swapXY)}
+                                />
+                              </div>
+                            }
+                            hoverable
+                          />
+
+                          <div className="Break"></div>
+
                           <Popup
                             content="Choose data from your computer saved in .xlsx file or paste it from your clipboard."
                             position="center"
