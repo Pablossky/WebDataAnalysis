@@ -532,23 +532,19 @@ function App() {
                           <hr style={{ margin: '10px 0', borderTop: '1px solid #ccc' }} />
                           <strong>Input</strong>
                           <Popup
-  content="Toggle to swap X and Y arrays on the chart"
-  position="center"
-  trigger={
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      {/* Center the text horizontally */}
-      <div style={{ marginRight: '10px' }}>Swap X and Y</div>
-      <ToggleSwitch
-        checked={swapXY}
-        onChange={() => setSwapXY(!swapXY)}
-      />
-    </div>
-  }
-  hoverable
-/>
-
-
-
+                            content="Toggle to swap X and Y arrays on the chart"
+                            position="center"
+                            trigger={
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <div style={{ marginRight: '10px' }}>Swap X and Y</div>
+                                <ToggleSwitch
+                                  checked={swapXY}
+                                  onChange={() => setSwapXY(!swapXY)}
+                                />
+                              </div>
+                            }
+                            hoverable
+                          />
                           <div className="Break"></div>
 
                           <Popup
