@@ -70,7 +70,6 @@ function App() {
     y: []
   });
   const { showSelectedArea, setShowSelectedArea } = useShowSelectedArea(false);
-  const { activeBookmark, setActiveBookmark } = useActiveBookmark('input');
   const { showMenu, setShowMenu } = useShowMenu(true);
   const { selectedArea, setSelectedArea } = useSelectedArea({});
   const [splitIndex, setSplitIndex] = useState(originalChartData.x.length / 2);
@@ -155,27 +154,12 @@ function App() {
     }
   }, [lowpassFilterEnabled, chartData, interpolationOffset, splitIndex, originalChartData, subtractFromOriginal, subtractionValue]);
 
-
-
   useEffect(() => {
     const { x, y } = originalChartData;
     setOriginalCopyData({ name: 'Copy of Original', x: [...x], y: [...y] });
   }, [originalChartData]);
 
   //-----------------------------------------HANDLE-------------------------------------------
-
-
-  const handleToggleMenu = () => {
-    setShowMenu(!showMenu);
-  }; // 
-
-  const handleSubtractFromOriginalToggle = () => {
-    setSubtractFromOriginal(!subtractFromOriginal);
-  };
-
-  const handleInterpolationOffsetChange = (event, value) => {
-    setInterpolationOffset(value);
-  }; // Ok
 
   const handleFileUpload = (e) => {
     const reader = new FileReader();
@@ -214,10 +198,6 @@ function App() {
     const modifiedChartData = applySubtraction(resampledChartData, value);
     setSubtractedChartData(modifiedChartData);
   };
-
-  const handleBookmarkClick = (bookmark) => {
-    setActiveBookmark(bookmark);
-  }; // Ok
 
   const handleSplitSliderChange = (event, value) => {
     setSplitIndex(value);
@@ -421,10 +401,6 @@ function App() {
     event.preventDefault();
   }; // Ok
 
-  const handleShowSelectedArea = () => {
-    setShowSelectedArea(!showSelectedArea);
-  }; // ?
-
   const handleSelectArea = (startIndex, endIndex) => {
     const { x, y } = chartData;
 
@@ -497,258 +473,257 @@ function App() {
         <Grid columns={1} divided centered style={{ flex: 1 }}>
           <Grid.Column textAlign="center" width={showMenu ? 16 : 16}>
 
-      
-      <div style={{width: '100%', display: 'flex', alignItems: 'stretch', background: '#fff' }}>
-        <Grid columns={2} divided centered style={{ flex: 1 }}>
-          <Grid.Column textAlign="center" width={showMenu ? 10 : 16}>
-            <Segment style={{ background: '#fff', border: '1px solid #ccc' }}>
-            <h1>Chart</h1>
-              <Chart
-                data={[
-                  subtractedChartData,
-                  filteredChartData,
-                  resampledChartData,
-                  offsettedChartData,
-                  interpolatedChartData,
-                  { ...originalCopyData, borderColor: 'purple' },
-                  splitDataChartData,
-                ]}
-                legend={true}
-              />
-            </Segment>
-          </Grid.Column>
-          {showMenu && (
-            <Grid.Column textAlign="center" width={5}>
-              <Segment style={{ background: '#fff', border: '1px solid #ccc', height: '100%', maxHeight: '100%', overflow: 'auto' }}>
-              <h1>Context menu</h1>
+            <div style={{ width: '100%', display: 'flex', alignItems: 'stretch', background: '#fff' }}>
+              <Grid columns={2} divided centered style={{ flex: 1 }}>
+                <Grid.Column textAlign="center" width={showMenu ? 10 : 16}>
+                  <Segment style={{ background: '#fff', border: '1px solid #ccc' }}>
+                    <h1>Chart</h1>
+                    <Chart
+                      data={[
+                        subtractedChartData,
+                        filteredChartData,
+                        resampledChartData,
+                        offsettedChartData,
+                        interpolatedChartData,
+                        { ...originalCopyData, borderColor: 'purple' },
+                        splitDataChartData,
+                      ]}
+                      legend={true}
+                    />
+                  </Segment>
+                </Grid.Column>
+                {showMenu && (
+                  <Grid.Column textAlign="center" width={5}>
+                    <Segment style={{ background: '#fff', border: '1px solid #ccc', height: '100%', maxHeight: '100%', overflow: 'auto' }}>
+                      <h1>Context menu</h1>
 
-                <Popup
-                  content="You can show/hide some function by clicking on matching switch."
-                  position="center"
-                  trigger={
+                      <Popup
+                        content="You can show/hide some function by clicking on matching switch."
+                        position="center"
+                        trigger={
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4%' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <div>Show Input</div>
-                        <ToggleSwitch
-                          checked={showInput}
-                          onChange={() => setShowInput(!showInput)}
-                        />
-                      </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4%' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                              <div>Show Input</div>
+                              <ToggleSwitch
+                                checked={showInput}
+                                onChange={() => setShowInput(!showInput)}
+                              />
+                            </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <div>Show Interpolation</div>
-                        <ToggleSwitch
-                          checked={showInterpolation}
-                          onChange={() => setShowInterpolation(!showInterpolation)}
-                        />
-                      </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                              <div>Show Interpolation</div>
+                              <ToggleSwitch
+                                checked={showInterpolation}
+                                onChange={() => setShowInterpolation(!showInterpolation)}
+                              />
+                            </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <div>Show Filter</div>
-                        <ToggleSwitch
-                          checked={showFilter}
-                          onChange={() => setShowFilter(!showFilter)}
-                        />
-                      </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                              <div>Show Filter</div>
+                              <ToggleSwitch
+                                checked={showFilter}
+                                onChange={() => setShowFilter(!showFilter)}
+                              />
+                            </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <div>Show Cutting</div>
-                        <ToggleSwitch
-                          checked={showCutting}
-                          onChange={() => setShowCutting(!showCutting)}
-                        />
-                      </div>
-                    </div>
-                  }
-                  hoverable
-                />
-
-                <div className="Space"></div>
-
-                {showInput && (
-                  <div> Input
-                    <Popup
-                      content="Choose data from your computer saved in .xlsx file or paste it from your clipboard."
-                      position="center"
-                      trigger={
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <div className="InputFile" style={{ marginRight: '10px' }}>
-                            <div></div>
-                            <Input
-                              type="file"
-                              accept=".xlsx, .xls"
-                              onChange={handleFileUpload}
-                            />
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                              <div>Show Cutting</div>
+                              <ToggleSwitch
+                                checked={showCutting}
+                                onChange={() => setShowCutting(!showCutting)}
+                              />
+                            </div>
                           </div>
-                          <div></div>
-                          <Input
-                            defaultValue="Paste data..."
-                            onChange={handlePaste}
+                        }
+                        hoverable
+                      />
+
+                      <div className="Space"></div>
+
+                      {showInput && (
+                        <div> Input
+                          <Popup
+                            content="Choose data from your computer saved in .xlsx file or paste it from your clipboard."
+                            position="center"
+                            trigger={
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <div className="InputFile" style={{ marginRight: '10px' }}>
+                                  <div></div>
+                                  <Input
+                                    type="file"
+                                    accept=".xlsx, .xls"
+                                    onChange={handleFileUpload}
+                                  />
+                                </div>
+                                <div></div>
+                                <Input
+                                  defaultValue="Paste data..."
+                                  onChange={handlePaste}
+                                />
+                              </div>
+                            }
+                            hoverable
                           />
                         </div>
-                      }
-                      hoverable
-                    />
-                  </div>
-                )}
+                      )}
 
-                <div className="Space"></div>
+                      <div className="Space"></div>
 
-                {showInterpolation && (
-                  <div> Interpolation
-                    <Popup
-                      content="DATA SOURCE decides which operation will be done earlier. Dropdown menu contains INTERPOLATION METHODS. SAMPLE COUNT changes the number of points presented on the Chart. OFFSET gives us the opportunity to start from a non-first sample when generating the chart, and INTERPOLATION OFFSET allows us to pick the moment when interpolation starts."
-                      position="center"
-                      trigger={<div>
-                        Interpolation method:
-                        <Dropdown
-                          placeholder="Choose method"
-                          selection
-                          options={interpolationMethod}
-                          value={selectedInterpolation}
-                          onChange={handleInterpolationChange}
-                        />
+                      {showInterpolation && (
+                        <div> Interpolation
+                          <Popup
+                            content="DATA SOURCE decides which operation will be done earlier. Dropdown menu contains INTERPOLATION METHODS. SAMPLE COUNT changes the number of points presented on the Chart. OFFSET gives us the opportunity to start from a non-first sample when generating the chart, and INTERPOLATION OFFSET allows us to pick the moment when interpolation starts."
+                            position="center"
+                            trigger={<div>
+                              Interpolation method:
+                              <Dropdown
+                                placeholder="Choose method"
+                                selection
+                                options={interpolationMethod}
+                                value={selectedInterpolation}
+                                onChange={handleInterpolationChange}
+                              />
 
-                        <div className="Break"></div>
+                              <div className="Break"></div>
 
-                        <div className="slider-container">
-                          <SliderInput
-                            value={splitIndex}
-                            min={0}
-                            max={originalChartData.x.length}
-                            onChange={handleSplitSliderChange}
-                            name={'Split Position'}
-                            sizeName={30}
-                            sizeSlider={60}
-                            sizeInput={20}
+                              <div className="slider-container">
+                                <SliderInput
+                                  value={splitIndex}
+                                  min={0}
+                                  max={originalChartData.x.length}
+                                  onChange={handleSplitSliderChange}
+                                  name={'Split Position'}
+                                  sizeName={30}
+                                  sizeSlider={60}
+                                  sizeInput={20}
+                                />
+                              </div>
+
+                              <div className="slider-container">
+                                <SliderInput
+                                  value={subtractionValue}
+                                  min={0}
+                                  max={200}
+                                  step={0.01}
+                                  onChange={handleSubtractionSliderChange}
+                                  name={'Subtraction Value'}
+                                  sizeName={30}
+                                  sizeSlider={60}
+                                  sizeInput={20}
+                                />
+                              </div>
+
+                              <div className="slider-container">
+                                <SliderInput
+                                  value={sliderValue}
+                                  min={0}
+                                  max={8 * chartData.x.length}
+                                  onChange={handleSliderChange}
+                                  name={'Sample Count'}
+                                  sizeName={30}
+                                  sizeSlider={60}
+                                  sizeInput={20}
+                                />
+                              </div>
+
+                              <div className="offset-slider-container">
+                                <SliderInput
+                                  value={offset}
+                                  min={0}
+                                  max={(sliderValue / 2) - 1}
+                                  onChange={handleOffsetSliderChange}
+                                  name={'Offset'}
+                                  sizeName={30}
+                                  sizeSlider={60}
+                                  sizeInput={20}
+                                />
+                              </div>
+                            </div>
+                            }
+                            hoverable
                           />
                         </div>
+                      )}
 
-                        <div className="slider-container">
-                          <SliderInput
-                            value={subtractionValue}
-                            min={0}
-                            max={200}
-                            step={0.01}
-                            onChange={handleSubtractionSliderChange}
-                            name={'Subtraction Value'}
-                            sizeName={30}
-                            sizeSlider={60}
-                            sizeInput={20}
+                      <div className='Space'></div>
+
+                      {showFilter && (
+                        <div> Filter
+                          <LowpassFilter
+                            lowpassFilterEnabled={lowpassFilterEnabled}
+                            handleLowpassToggle={handleLowpassToggle}
+                            cutoffFrequency={cutoffFrequency}
+                            handleCutoffFrequency={handleCutoffFrequency}
+                            sampleRate={sampleRate}
+                            handleSampleRate={handleSampleRate}
                           />
                         </div>
+                      )}
 
-                        <div className="slider-container">
-                          <SliderInput
-                            value={sliderValue}
-                            min={0}
-                            max={8 * chartData.x.length}
-                            onChange={handleSliderChange}
-                            name={'Sample Count'}
-                            sizeName={30}
-                            sizeSlider={60}
-                            sizeInput={20}
+                      <div className='Space'></div>
+
+                      {showCutting && (
+                        <div> Cutting
+                          <Popup
+                            content="From there you can CUT the data from start and end."
+                            position="center"
+                            trigger={
+                              <div>
+                                <SliderInput
+                                  value={cutStartIndex}
+                                  min={0}
+                                  max={originalChartData.x.length - 1}
+                                  step={1}
+                                  onChange={(event, value) => setCutStartIndex(value)}
+                                  name="Cut Start"
+                                  sizeName={30}
+                                  sizeSlider={60}
+                                  sizeInput={20}
+                                />
+                                <SliderInput
+                                  value={cutEndIndex}
+                                  min={0}
+                                  max={originalChartData.x.length - 1}
+                                  step={1}
+                                  onChange={(event, value) => setCutEndIndex(value)}
+                                  name="Cut End"
+                                  sizeName={30}
+                                  sizeSlider={60}
+                                  sizeInput={20}
+                                />
+                              </div>
+                            }
+                            hoverable
                           />
                         </div>
+                      )}
 
-                        <div className="offset-slider-container">
-                          <SliderInput
-                            value={offset}
-                            min={0}
-                            max={(sliderValue / 2) - 1}
-                            onChange={handleOffsetSliderChange}
-                            name={'Offset'}
-                            sizeName={30}
-                            sizeSlider={60}
-                            sizeInput={20}
-                          />
-                        </div>
-                      </div>
-                      }
-                      hoverable
-                    />
-                  </div>
-                )}
+                      <div className='Space'></div>
 
-                <div className='Space'></div>
-
-                {showFilter && (
-                  <div> Filter
-                    <LowpassFilter
-                      lowpassFilterEnabled={lowpassFilterEnabled}
-                      handleLowpassToggle={handleLowpassToggle}
-                      cutoffFrequency={cutoffFrequency}
-                      handleCutoffFrequency={handleCutoffFrequency}
-                      sampleRate={sampleRate}
-                      handleSampleRate={handleSampleRate}
-                    />
-                  </div>
-                )}
-
-                <div className='Space'></div>
-
-                {showCutting && (
-                  <div> Cutting
-                    <Popup
-                      content="From there you can CUT the data from start and end."
-                      position="center"
-                      trigger={
-                        <div>
-                          <SliderInput
-                            value={cutStartIndex}
-                            min={0}
-                            max={originalChartData.x.length - 1}
-                            step={1}
-                            onChange={(event, value) => setCutStartIndex(value)}
-                            name="Cut Start"
-                            sizeName={30}
-                            sizeSlider={60}
-                            sizeInput={20}
-                          />
-                          <SliderInput
-                            value={cutEndIndex}
-                            min={0}
-                            max={originalChartData.x.length - 1}
-                            step={1}
-                            onChange={(event, value) => setCutEndIndex(value)}
-                            name="Cut End"
-                            sizeName={30}
-                            sizeSlider={60}
-                            sizeInput={20}
-                          />
-                        </div>
-                      }
-                      hoverable
-                    />
-                  </div>
-                )}
-
-                <div className='Space'></div>
-
-                <div>
-                  <Popup
-                    content="You can download data from here."
-                    position="center"
-                    trigger={
                       <div>
-                        <DownloadingData
-                          data1={resampledChartData}
-                          data2={chartData}
-                          data3={filteredChartData}
-                          buttonWidth={200}
+                        <Popup
+                          content="You can download data from here."
+                          position="center"
+                          trigger={
+                            <div>
+                              <DownloadingData
+                                data1={resampledChartData}
+                                data2={chartData}
+                                data3={filteredChartData}
+                                buttonWidth={200}
+                              />
+                            </div>
+                          }
+                          hoverable
                         />
                       </div>
-                    }
-                    hoverable
-                  />
-                </div>
-              </Segment>
-            </Grid.Column>
-          )}
-        </Grid>
-      </div>
-      </Grid.Column>
+                    </Segment>
+                  </Grid.Column>
+                )}
+              </Grid>
+            </div>
+          </Grid.Column>
         </Grid>
       </Segment>
     </div>
