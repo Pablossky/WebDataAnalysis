@@ -12,6 +12,7 @@ import interpolateArray from './functionality/interpolateArray.js';
 import "./functionality/dataManagement.js";
 import "./functionality/plottingData.js";
 import applySubtraction from './functionality/applySubtraction.js';
+import useDebounce from './functionality/useDebounce.js';
 
 // Components
 import SliderInput from './components/SliderInput';
@@ -43,6 +44,7 @@ function App() {
 
   // useStates & useEffects
   const { sliderValue, setSliderValue } = useSliderValue(5);
+
   const { sampleCount, setSampleCount } = useSampleCount(5);
   const { selectedInterpolation, setSelectedInterpolation } = useSelectedInterpolation('linear');
   const { selectedSource, setSelectedSource } = useSelectedSource('dataFile');
@@ -83,6 +85,7 @@ function App() {
   const [showCutting, setShowCutting] = useState(true);
   const [swapXY, setSwapXY] = useState(false);
 
+  const [debounceTimer, setDebounceTimer] = useState(null);
 
   // Required to parse Excel data
   const XLSX = require('xlsx');
@@ -258,6 +261,11 @@ function App() {
   }; // ToDo Akima
 
   const handleSliderChange = (event, value) => {
+    // Clear the previous timer if it exists
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+    // Set a new timer to execute the sli
     setSliderValue(value);
     const numValues = Math.round(value);
     setSampleCount(numValues);
@@ -272,27 +280,37 @@ function App() {
       for (let i = 0; i < numValues; i++) {
         const index = Math.floor(i * resamplingFactor);
         const remainder = i * resamplingFactor - index;
-
-        if (remainder === 0) {
-          resampledX.push(splitDataChartData.x[index]);
-          resampledY.push(splitDataChartData.y[index]);
-        } else {
-          const interpolatedX = splitDataChartData.x[index] + remainder * (splitDataChartData.x[index + 1] - splitDataChartData.x[index]);
-          const interpolatedY = splitDataChartData.y[index] + remainder * (splitDataChartData.y[index + 1] - splitDataChartData.y[index]);
-          resampledX.push(interpolatedX);
-          resampledY.push(interpolatedY);
-        }
+        const newDebounceTimer = setTimeout(() => {
+          setDebounceTimer(newDebounceTimer);
+          if (remainder === 0) {
+            resampledX.push(splitDataChartData.x[index]);
+            resampledY.push(splitDataChartData.y[index]);
+          } else {
+            const interpolatedX = splitDataChartData.x[index] + remainder * (splitDataChartData.x[index + 1] - splitDataChartData.x[index]);
+            const interpolatedY = splitDataChartData.y[index] + remainder * (splitDataChartData.y[index + 1] - splitDataChartData.y[index]);
+            resampledX.push(interpolatedX);
+            resampledY.push(interpolatedY);
+          }
+        }, 1000);
       }
+
     } else if (selectedInterpolation === 'cubic') {
-      const { x: interpolatedX, y: interpolatedY } = interpolateArray(
-        splitDataChartData.x,
-        splitDataChartData.y,
-        numValues,
-        'cubic'
-      );
-      resampledX = interpolatedX;
-      resampledY = interpolatedY;
-    } else if (selectedInterpolation === 'akima') {
+      
+        const { x: interpolatedX, y: interpolatedY } = interpolateArray(
+          splitDataChartData.x,
+          splitDataChartData.y,
+          numValues,
+          'cubic'
+        );
+        resampledX = interpolatedX;
+        resampledY = interpolatedY;
+    }
+
+
+
+
+
+    else if (selectedInterpolation === 'akima') {
       const { x: akimaInterpolatedX, y: akimaInterpolatedY } = akimaInterpolate(
         splitDataChartData.x,
         splitDataChartData.y,
@@ -310,6 +328,9 @@ function App() {
     };
 
     setResampledChartData(resampledChartData);
+    // 1000ms (1 second)
+
+    // Store the new timer ID
   }; // ToDo limits on Akima
 
   const handleOffsetSliderChange = (event, value) => {
@@ -451,6 +472,11 @@ function App() {
     event.preventDefault();
   }; // Ok
 
+  function delaySlider(sliderOperation, time) {
+    return setTimeout(sliderOperation, time);
+  }
+
+
   //----------------------------------------------APP-------------------------------------------------------
 
   return (
@@ -487,7 +513,6 @@ function App() {
                         content="You can show/hide some function by clicking on matching switch."
                         position="center"
                         trigger={
-
                           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4%' }}>
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                               <div>Show Input</div>
