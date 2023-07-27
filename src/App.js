@@ -142,10 +142,7 @@ function App() {
 
   useEffect(() => {
     handleInterpolation();
-    if (subtractFromOriginal) {
-      const modifiedChartData = applySubtraction(originalChartData, subtractionValue);
-      setSubtractedChartData(modifiedChartData);
-    }
+    
   }, [lowpassFilterEnabled, chartData, splitIndex, originalChartData, subtractFromOriginal, subtractionValue]);
 
   useEffect(() => {
