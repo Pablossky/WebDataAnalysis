@@ -67,7 +67,7 @@ function App() {
     x: [],
     y: []
   });
-  const [splitIndex, setSplitIndex] = useState(originalChartData.x.length / 2);
+  const [splitIndex, setSplitIndex] = useState(1);
   const [originalCopyData, setOriginalCopyData] = useState({ name: 'Copy of Original', x: [], y: [] });
   const [subtractionValue, setSubtractionValue] = useState(0.0);
   const [subtractFromOriginal, setSubtractFromOriginal] = useState(false);
@@ -89,6 +89,8 @@ function App() {
 
   // Required to parse Excel data
   const XLSX = require('xlsx');
+
+  const numeric = require('numeric');
 
   const interpolationMethod = [
     { key: '1', text: 'Linear', value: 'linear' },
@@ -271,6 +273,7 @@ function App() {
     setSampleCount(numValues);
 
     let resampledX, resampledY;
+    let interpolatedX, interpolatedY;
 
     if (selectedInterpolation === 'linear') {
       const resamplingFactor = (splitDataChartData.x.length - 1) / (numValues - 1);
@@ -295,26 +298,41 @@ function App() {
       }
 
     } else if (selectedInterpolation === 'cubic') {
-      
-        const { x: interpolatedX, y: interpolatedY } = interpolateArray(
-          splitDataChartData.x,
-          splitDataChartData.y,
-          numValues,
-          'cubic'
-        );
-        resampledX = interpolatedX;
-        resampledY = interpolatedY;
+      const interpolator = numeric.spline(splitDataChartData.x, splitDataChartData.y, 'cubic');
+      const resamplingFactor = (splitDataChartData.x.length - 1) / (numValues - 1);
+      resampledX = [];
+      resampledY = [];
+
+        if (debounceTimer) {
+          clearTimeout(debounceTimer);
+        }
+
+      for (let i = 0; i < numValues; i++) {
+        const index = Math.floor(i * resamplingFactor);
+        const remainder = i * resamplingFactor - index;
+    
+        const newDebounceTimer = setTimeout(() => {
+          setDebounceTimer(newDebounceTimer);
+          if (remainder === 0) {
+            resampledX.push(splitDataChartData.x[index]);
+            resampledY.push(splitDataChartData.y[index]);
+        } else {
+          const interpolatedXValue = splitDataChartData.x[index] + remainder * (splitDataChartData.x[index + 1] - splitDataChartData.x[index]);
+          const interpolatedYValue = interpolator.at(interpolatedXValue); 
+          resampledX.push(interpolatedXValue);
+          resampledY.push(interpolatedYValue);}
+        }, 1000);
+    
+        setDebounceTimer(newDebounceTimer);
+      }
     }
-
-
-
-
+    
 
     else if (selectedInterpolation === 'akima') {
       const { x: akimaInterpolatedX, y: akimaInterpolatedY } = akimaInterpolate(
         splitDataChartData.x,
         splitDataChartData.y,
-        resampledChartData.x // Use resampledChartData.x instead of numValues
+        resampledChartData.x
       );
 
       resampledX = akimaInterpolatedX;
@@ -327,10 +345,10 @@ function App() {
       y: resampledY,
     };
 
-    setResampledChartData(resampledChartData);
-    // 1000ms (1 second)
-
-    // Store the new timer ID
+    //const newDebounceTimer = setTimeout(() => {
+      //setDebounceTimer(newDebounceTimer);
+      setResampledChartData(resampledChartData);
+      //}, 1000);
   }; // ToDo limits on Akima
 
   const handleOffsetSliderChange = (event, value) => {
