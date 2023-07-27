@@ -57,7 +57,8 @@ function App() {
     x: [1, 2, 3, 4],
     y: [1, 2, 1, 2]
   });
-  const { chartData, setChartData } = useChartData(originalChartData); const [resampledChartData, setResampledChartData] = useState({
+  const { chartData, setChartData } = useChartData(originalChartData);
+  const [resampledChartData, setResampledChartData] = useState({
     name: 'Resampling',
     x: [],
     y: [],
@@ -79,11 +80,12 @@ function App() {
 
   const [cutStartIndex, setCutStartIndex] = useState(0);
   const [cutEndIndex, setCutEndIndex] = useState(originalChartData.x.length);
-  const [showInput, setShowInput] = useState(true);
+  const [showInput, setShowInput] = useState(false);
   const [showInterpolation, setShowInterpolation] = useState(true);
-  const [showFilter, setShowFilter] = useState(true);
-  const [showCutting, setShowCutting] = useState(true);
+  const [showFilter, setShowFilter] = useState(false);
+  const [showCutting, setShowCutting] = useState(false);
   const [swapXY, setSwapXY] = useState(false);
+  const [showInterpolationAccordion, setShowInterpolationAccordion] = useState(false);
 
   const [debounceTimer, setDebounceTimer] = useState(null);
 
@@ -263,17 +265,14 @@ function App() {
   }; // ToDo Akima
 
   const handleSliderChange = (event, value) => {
-    // Clear the previous timer if it exists
     if (debounceTimer) {
       clearTimeout(debounceTimer);
     }
-    // Set a new timer to execute the sli
     setSliderValue(value);
     const numValues = Math.round(value);
     setSampleCount(numValues);
 
     let resampledX, resampledY;
-    let interpolatedX, interpolatedY;
 
     if (selectedInterpolation === 'linear') {
       const resamplingFactor = (splitDataChartData.x.length - 1) / (numValues - 1);
@@ -294,7 +293,7 @@ function App() {
             resampledX.push(interpolatedX);
             resampledY.push(interpolatedY);
           }
-        }, 1000);
+        }, 100);
       }
 
     } else if (selectedInterpolation === 'cubic') {
@@ -303,30 +302,30 @@ function App() {
       resampledX = [];
       resampledY = [];
 
-        if (debounceTimer) {
-          clearTimeout(debounceTimer);
-        }
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
 
       for (let i = 0; i < numValues; i++) {
         const index = Math.floor(i * resamplingFactor);
         const remainder = i * resamplingFactor - index;
-    
+
         const newDebounceTimer = setTimeout(() => {
           setDebounceTimer(newDebounceTimer);
           if (remainder === 0) {
             resampledX.push(splitDataChartData.x[index]);
             resampledY.push(splitDataChartData.y[index]);
-        } else {
-          const interpolatedXValue = splitDataChartData.x[index] + remainder * (splitDataChartData.x[index + 1] - splitDataChartData.x[index]);
-          const interpolatedYValue = interpolator.at(interpolatedXValue); 
-          resampledX.push(interpolatedXValue);
-          resampledY.push(interpolatedYValue);}
-        }, 1000);
-    
+          } else {
+            const interpolatedXValue = splitDataChartData.x[index] + remainder * (splitDataChartData.x[index + 1] - splitDataChartData.x[index]);
+            const interpolatedYValue = interpolator.at(interpolatedXValue);
+            resampledX.push(interpolatedXValue);
+            resampledY.push(interpolatedYValue);
+          }
+        }, 100);
+
         setDebounceTimer(newDebounceTimer);
       }
     }
-    
 
     else if (selectedInterpolation === 'akima') {
       const { x: akimaInterpolatedX, y: akimaInterpolatedY } = akimaInterpolate(
@@ -346,9 +345,9 @@ function App() {
     };
 
     //const newDebounceTimer = setTimeout(() => {
-      //setDebounceTimer(newDebounceTimer);
-      setResampledChartData(resampledChartData);
-      //}, 1000);
+    //setDebounceTimer(newDebounceTimer);
+    setResampledChartData(resampledChartData);
+    //}, 1000);
   }; // ToDo limits on Akima
 
   const handleOffsetSliderChange = (event, value) => {
@@ -490,11 +489,6 @@ function App() {
     event.preventDefault();
   }; // Ok
 
-  function delaySlider(sliderOperation, time) {
-    return setTimeout(sliderOperation, time);
-  }
-
-
   //----------------------------------------------APP-------------------------------------------------------
 
   return (
@@ -511,12 +505,7 @@ function App() {
                     <Chart
                       data={[
                         subtractedChartData,
-                        filteredChartData,
-                        resampledChartData,
-                        offsettedChartData,
-                        interpolatedChartData,
-                        { ...originalCopyData, borderColor: 'purple' },
-                        splitDataChartData,
+                        originalCopyData,
                       ]}
                       legend={true}
                     />
@@ -551,10 +540,14 @@ function App() {
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                               <div>Show Filter</div>
                               <ToggleSwitch
-                                checked={showFilter}
-                                onChange={() => setShowFilter(!showFilter)}
+                                checked={showFilter || lowpassFilterEnabled}
+                                onChange={() => {
+                                  setShowFilter(!showFilter);
+                                  setLowpassEnabled(!lowpassFilterEnabled);
+                                }}
                               />
                             </div>
+
 
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                               <div>Show Cutting</div>
@@ -618,82 +611,118 @@ function App() {
                       <div className="Break"></div>
 
                       {showInterpolation && (
-                        <div>
-                          <hr style={{ margin: '10px 0', borderTop: '1px solid #ccc' }} />
-                          <strong>Interpolation</strong>
-                          <Popup
-                            content="DATA SOURCE decides which operation will be done earlier. Dropdown menu contains INTERPOLATION METHODS. SAMPLE COUNT changes the number of points presented on the Chart. OFFSET gives us the opportunity to start from a non-first sample when generating the chart, and INTERPOLATION OFFSET allows us to pick the moment when interpolation starts."
-                            position="center"
-                            trigger={<div>
-                              Interpolation method:
-                              <Dropdown
-                                placeholder="Choose method"
-                                selection
-                                options={interpolationMethod}
-                                value={selectedInterpolation}
-                                onChange={handleInterpolationChange}
-                              />
+        <div style={{ paddingTop: '10px', borderTop: '1px solid #ccc', textAlign: 'center' }}>
+          <div
+            onClick={() => setShowInterpolationAccordion(!showInterpolationAccordion)}
+            style={{
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto', // Center the entire div horizontally
+              maxWidth: '250px', // Optionally limit the maximum width of the container
+            }}
+          >
+            
+            <strong style={{ fontSize: '1.2em' }}>Interpolation</strong>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{
+                marginLeft: '5%',
+                transition: 'transform 0.3s',
+                transform: showInterpolationAccordion ? 'rotate(180deg)' : 'none',
+              }}
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </div>
 
-                              <div className="Break"></div>
+          
+          <div className="slider-container">
+                                    <SliderInput
+                                      value={sliderValue}
+                                      min={0}
+                                      max={8 * chartData.x.length}
+                                      onChange={handleSliderChange}
+                                      name={'Sample Count'}
+                                      sizeName={30}
+                                      sizeSlider={60}
+                                      sizeInput={20}
+                                    />
+                                  </div>
 
-                              <div className="slider-container">
-                                <SliderInput
-                                  value={splitIndex}
-                                  min={0}
-                                  max={originalChartData.x.length}
-                                  onChange={handleSplitSliderChange}
-                                  name={'Split Position'}
-                                  sizeName={30}
-                                  sizeSlider={60}
-                                  sizeInput={20}
-                                />
-                              </div>
+                          {showInterpolationAccordion && (
+                            <Popup
+                              content="DATA SOURCE decides which operation will be done earlier. Dropdown menu contains INTERPOLATION METHODS. SAMPLE COUNT changes the number of points presented on the Chart. OFFSET gives us the opportunity to start from a non-first sample when generating the chart, and INTERPOLATION OFFSET allows us to pick the moment when interpolation starts."
+                              position="center"
+                              trigger={
+                                <div>
+                                  Interpolation method:
+                                  <Dropdown
+                                    placeholder="Choose method"
+                                    selection
+                                    options={interpolationMethod}
+                                    value={selectedInterpolation}
+                                    onChange={handleInterpolationChange}
+                                  />
 
-                              <div className="slider-container">
-                                <SliderInput
-                                  value={subtractionValue}
-                                  min={0}
-                                  max={200}
-                                  step={0.01}
-                                  onChange={handleSubtractionSliderChange}
-                                  name={'Subtraction Value'}
-                                  sizeName={30}
-                                  sizeSlider={60}
-                                  sizeInput={20}
-                                />
-                              </div>
+                                  <div className="Break"></div>
 
-                              <div className="slider-container">
-                                <SliderInput
-                                  value={sliderValue}
-                                  min={0}
-                                  max={8 * chartData.x.length}
-                                  onChange={handleSliderChange}
-                                  name={'Sample Count'}
-                                  sizeName={30}
-                                  sizeSlider={60}
-                                  sizeInput={20}
-                                />
-                              </div>
+                                  <div className="slider-container">
+                                    <SliderInput
+                                      value={splitIndex}
+                                      min={0}
+                                      max={originalChartData.x.length}
+                                      onChange={handleSplitSliderChange}
+                                      name={'Split Position'}
+                                      sizeName={30}
+                                      sizeSlider={60}
+                                      sizeInput={20}
+                                    />
+                                  </div>
 
-                              <div className="offset-slider-container">
-                                <SliderInput
-                                  value={offset}
-                                  min={0}
-                                  max={(sliderValue / 2) - 1}
-                                  onChange={handleOffsetSliderChange}
-                                  name={'Offset'}
-                                  sizeName={30}
-                                  sizeSlider={60}
-                                  sizeInput={20}
-                                />
-                              </div>
-                            </div>
-                            }
-                            hoverable
-                          />
+                                  <div className="slider-container">
+                                    <SliderInput
+                                      value={subtractionValue}
+                                      min={0}
+                                      max={200}
+                                      step={0.01}
+                                      onChange={handleSubtractionSliderChange}
+                                      name={'Subtraction Value'}
+                                      sizeName={30}
+                                      sizeSlider={60}
+                                      sizeInput={20}
+                                    />
+                                  </div>
+
+                                  <div className="offset-slider-container">
+                                    <SliderInput
+                                      value={offset}
+                                      min={0}
+                                      max={(sliderValue / 2) - 1}
+                                      onChange={handleOffsetSliderChange}
+                                      name={'Offset'}
+                                      sizeName={30}
+                                      sizeSlider={60}
+                                      sizeInput={20}
+                                    />
+                                  </div>
+                                </div>
+                              }
+                              hoverable
+                            />
+                          )}
                         </div>
                       )}
+
 
                       <div className='Break'></div>
 
