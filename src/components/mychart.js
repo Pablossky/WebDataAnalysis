@@ -65,6 +65,8 @@ const labels = ['', 'xAxis', 'yAxis']
 function Chart({ data }) {
   const [selectedPoints, setSelectedPoints] = useState({ point1: null, point2: null });
   const [linearRegressionResult, setLinearRegressionResult] = useState(null);
+  const [linearRegressionLine, setLinearRegressionLine] = useState(null);
+
 
   const plotData = useMemo(() => {
     const pData = data.map(i => {
@@ -75,7 +77,7 @@ function Chart({ data }) {
         line: { width: 1 },
         marker: { size: 5, opacity: 0.8 },
         hovertemplate: '%{y:.2f}',
-        selected: false, // New property to track selected points
+        selected: false,
       }
     });
 
@@ -101,17 +103,22 @@ function Chart({ data }) {
   const handleSelectPoint = (event) => {
     const selectedPoint = {
       datasetIndex: event.points[0].curveNumber,
-      index: event.points[0].pointIndex
+      index: event.points[0].pointIndex,
     };
-
+  
     if (selectedPoints.point1 && !selectedPoints.point2) {
       setSelectedPoints({ ...selectedPoints, point2: selectedPoint });
-
+  
       const result = calculateLinearRegression(selectedPoints.point1, selectedPoint);
       setLinearRegressionResult(result);
+  
+      const xValues = [data[selectedPoints.point1.datasetIndex].x[selectedPoints.point1.index], data[selectedPoint.datasetIndex].x[selectedPoint.index]];
+      const yValues = [data[selectedPoints.point1.datasetIndex].y[selectedPoints.point1.index], data[selectedPoint.datasetIndex].y[selectedPoint.index]];
+      setLinearRegressionLine({ x: xValues, y: yValues });
     } else {
       setSelectedPoints({ point1: selectedPoint, point2: null });
       setLinearRegressionResult(null);
+      setLinearRegressionLine(null);
     }
   };
 
@@ -125,7 +132,7 @@ function Chart({ data }) {
         style={{ width: '100%', height: '100%' }}
       />
 
-<div className="info-button-regression" style={{float:"right", display: 'flex', padding: '40px'}}>
+      <div className="info-button-regression" style={{ float: "right", display: 'flex', padding: '40px' }}>
         <Popup
           content="After selecting two points on chart, difference in X and Y will be shown. The equation of LINEAR REGRESSION FUNCTION depends on these points"
           trigger={

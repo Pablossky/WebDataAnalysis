@@ -88,6 +88,9 @@ function App() {
 
   const [debounceTimer, setDebounceTimer] = useState(null);
 
+  
+  const [linearRegressionLine, setLinearRegressionLine] = useState(null);
+
   // Required to parse Excel data
   const XLSX = require('xlsx');
 
