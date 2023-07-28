@@ -1,7 +1,9 @@
 import React, { useMemo, useState } from "react";
 import Plotly from "react-plotly.js";
 import { dflt } from './chart-plotly';
-import { Popup } from 'semantic-ui-react';
+
+import { Popup, Grid, Segment } from 'semantic-ui-react';
+import SliderInput from "./SliderInput";
 
 const config = {
   ...dflt.config,
@@ -66,7 +68,7 @@ function Chart({ data }) {
   const [selectedPoints, setSelectedPoints] = useState({ point1: null, point2: null });
   const [linearRegressionResult, setLinearRegressionResult] = useState(null);
   const [linearRegressionLine, setLinearRegressionLine] = useState(null);
-
+  const [sliderValue, setSliderValue] = useState(0);
 
   const plotData = useMemo(() => {
     const pData = data.map(i => {
@@ -100,28 +102,32 @@ function Chart({ data }) {
     return `y = ${slope.toFixed(2)}x + ${yIntercept.toFixed(2)}`;
   };
 
+  const updateLinearRegressionLine = (offset) => {
+    if (linearRegressionLine) {
+      const newXValues = linearRegressionLine.x.map((x) => x + offset);
+      setLinearRegressionLine({ ...linearRegressionLine, x: newXValues });
+    }
+  };
+
   const handleSelectPoint = (event) => {
     const selectedPoint = {
       datasetIndex: event.points[0].curveNumber,
       index: event.points[0].pointIndex,
     };
-  
+
     if (selectedPoints.point1 && !selectedPoints.point2) {
-      // Check if the newly selected point is the same as the previous selected point
       if (
         selectedPoint.datasetIndex === selectedPoints.point1.datasetIndex &&
         selectedPoint.index === selectedPoints.point1.index
       ) {
-        // If it's the same point, reset the selected points and clear the linear regression line
         setSelectedPoints({ point1: null, point2: null });
         setLinearRegressionResult(null);
         setLinearRegressionLine(null);
       } else {
         setSelectedPoints({ ...selectedPoints, point2: selectedPoint });
-  
+
         const result = calculateLinearRegression(selectedPoints.point1, selectedPoint);
         setLinearRegressionResult(result);
-        // Calculate the points for linear regression line
         const xValues = [data[selectedPoints.point1.datasetIndex].x[selectedPoints.point1.index], data[selectedPoint.datasetIndex].x[selectedPoint.index]];
         const yValues = [data[selectedPoints.point1.datasetIndex].y[selectedPoints.point1.index], data[selectedPoint.datasetIndex].y[selectedPoint.index]];
         setLinearRegressionLine({ x: xValues, y: yValues });
@@ -131,7 +137,14 @@ function Chart({ data }) {
       setLinearRegressionResult(null);
       setLinearRegressionLine(null);
     }
-  };  
+  };
+
+  const handleSliderChange = (event, newValue) => {
+    // Calculate the offset from the original x values
+    const offset = newValue - sliderValue;
+    setSliderValue(newValue);
+    updateLinearRegressionLine(offset);
+  };
 
   const selectedPoint1Data = selectedPoints.point1
     ? {
@@ -176,38 +189,55 @@ function Chart({ data }) {
         style={{ width: "100%", height: "100%" }}
       />
 
-      <div className="info-button-regression" style={{ float: "right", display: 'flex', padding: '40px' }}>
-        <Popup
-          content="After selecting two points on chart, difference in X and Y will be shown. The equation of LINEAR REGRESSION FUNCTION depends on these points"
-          trigger={
-            <div className="ui icon button">
-              <i className="info icon"></i>
+      <Segment style={{ width: '100%', background: '#fff', display: 'flex', alignItems: 'stretch', border: '1px solid #ccc' }}>
+        <Grid columns={1} divided centered style={{ flex: 1 }}>
+          <Grid.Column textAlign="center" width={16}>
+            <div className="info-button-regression" style={{ float: "right", display: 'flex', padding: '10px' }}>
+              <Popup
+                content="After selecting two points on chart, difference in X and Y will be shown. The equation of LINEAR REGRESSION FUNCTION depends on these points"
+                trigger={
+                  <div className="ui icon button">
+                    <i className="info icon"></i>
+                  </div>
+                }
+              />
             </div>
-          }
-        />
-      </div>
 
-      {linearRegressionResult && (
-        <div style={{ padding: '10px', borderRadius: '5px', marginTop: '20px', backgroundColor: '#f1f1f1' }}>
-          <div>
-            Point 1: ({data[selectedPoints.point1.datasetIndex].x[selectedPoints.point1.index]},
-            {data[selectedPoints.point1.datasetIndex].y[selectedPoints.point1.index]})
-          </div>
-          <div>
-            Point 2: ({data[selectedPoints.point2.datasetIndex].x[selectedPoints.point2.index]},
-            {data[selectedPoints.point2.datasetIndex].y[selectedPoints.point2.index]})
-          </div>
-          <div>
-            Difference in X: {linearRegressionResult.xDiff.toFixed(2)}
-          </div>
-          <div>
-            Difference in Y: {linearRegressionResult.yDiff.toFixed(2)}
-          </div>
-          <div>
-            Linear Regression Function: {formatLinearRegressionFunction(linearRegressionResult.slope, linearRegressionResult.yIntercept)}
-          </div>
-        </div>
-      )}
+            {linearRegressionResult && (
+              <div style={{ padding: '10px', borderRadius: '5px', backgroundColor: '#f1f1f1' }}>
+                <div>
+                  Point 1: ({data[selectedPoints.point1.datasetIndex].x[selectedPoints.point1.index]},
+                  {data[selectedPoints.point1.datasetIndex].y[selectedPoints.point1.index]})
+                </div>
+                <div>
+                  Point 2: ({data[selectedPoints.point2.datasetIndex].x[selectedPoints.point2.index]},
+                  {data[selectedPoints.point2.datasetIndex].y[selectedPoints.point2.index]})
+                </div>
+                <div>
+                  Difference in X: {linearRegressionResult.xDiff.toFixed(2)}
+                </div>
+                <div>
+                  Difference in Y: {linearRegressionResult.yDiff.toFixed(2)}
+                </div>
+                <div>
+                  Linear Regression Function: {formatLinearRegressionFunction(linearRegressionResult.slope, linearRegressionResult.yIntercept)}
+                </div>
+                <SliderInput
+                  value={sliderValue}
+                  min={-10}
+                  max={10}
+                  step={0.01}
+                  onChange={handleSliderChange}
+                  name="Offset"
+                  sizeName={1}
+                  sizeSlider={8}
+                  sizeInput={1}
+                />
+              </div>
+            )}
+          </Grid.Column>
+        </Grid>
+      </Segment>
     </div>
   );
 }
