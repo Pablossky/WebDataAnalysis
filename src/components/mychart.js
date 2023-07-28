@@ -147,10 +147,22 @@ function Chart({ data }) {
   };
 
   const handleLengthSliderChange = (event, newValue) => {
-    const length = newValue - lineLength;
+    // Calculate the change in line length from the previous value
+    const lineLengthChange = newValue - linearRegressionLineLength;
+    setLinearRegressionLineLength(newValue);
+  
+    // Calculate the change in offset to move the plot along the X-axis
+    const offsetXChange = (lineLengthChange * linearRegressionLine.slope) / Math.sqrt(1 + linearRegressionLine.slope * linearRegressionLine.slope);
+    const newOffsetX = linearRegressionLine.offsetX - offsetXChange;
+    
+    // Update the starting offset and line length
+    setStartOffset(newOffsetX);
     setLineLength(newValue);
-    updateLinearRegressionLine(startOffset, length);
+  
+    // Update the linear regression line
+    updateLinearRegressionLine(newOffsetX, newValue);
   };
+  
 
   const handleSelectPoint = (event) => {
     const selectedPoint = {
@@ -285,7 +297,7 @@ function Chart({ data }) {
               <SliderInput
                 value={linearRegressionLineLength}
                 min={0}
-                max={100}
+                max={200}
                 step={0.01}
                 onChange={(event, value) => handleSliderChange(event, value, "lineLength")}
                 name="Line Length"
