@@ -107,29 +107,73 @@ function Chart({ data }) {
     };
   
     if (selectedPoints.point1 && !selectedPoints.point2) {
-      setSelectedPoints({ ...selectedPoints, point2: selectedPoint });
+      // Check if the newly selected point is the same as the previous selected point
+      if (
+        selectedPoint.datasetIndex === selectedPoints.point1.datasetIndex &&
+        selectedPoint.index === selectedPoints.point1.index
+      ) {
+        // If it's the same point, reset the selected points and clear the linear regression line
+        setSelectedPoints({ point1: null, point2: null });
+        setLinearRegressionResult(null);
+        setLinearRegressionLine(null);
+      } else {
+        setSelectedPoints({ ...selectedPoints, point2: selectedPoint });
   
-      const result = calculateLinearRegression(selectedPoints.point1, selectedPoint);
-      setLinearRegressionResult(result);
-  
-      const xValues = [data[selectedPoints.point1.datasetIndex].x[selectedPoints.point1.index], data[selectedPoint.datasetIndex].x[selectedPoint.index]];
-      const yValues = [data[selectedPoints.point1.datasetIndex].y[selectedPoints.point1.index], data[selectedPoint.datasetIndex].y[selectedPoint.index]];
-      setLinearRegressionLine({ x: xValues, y: yValues });
+        const result = calculateLinearRegression(selectedPoints.point1, selectedPoint);
+        setLinearRegressionResult(result);
+        // Calculate the points for linear regression line
+        const xValues = [data[selectedPoints.point1.datasetIndex].x[selectedPoints.point1.index], data[selectedPoint.datasetIndex].x[selectedPoint.index]];
+        const yValues = [data[selectedPoints.point1.datasetIndex].y[selectedPoints.point1.index], data[selectedPoint.datasetIndex].y[selectedPoint.index]];
+        setLinearRegressionLine({ x: xValues, y: yValues });
+      }
     } else {
       setSelectedPoints({ point1: selectedPoint, point2: null });
       setLinearRegressionResult(null);
       setLinearRegressionLine(null);
     }
-  };
+  };  
+
+  const selectedPoint1Data = selectedPoints.point1
+    ? {
+      x: [data[selectedPoints.point1.datasetIndex].x[selectedPoints.point1.index]],
+      y: [data[selectedPoints.point1.datasetIndex].y[selectedPoints.point1.index]],
+      mode: "markers",
+      type: "scatter",
+      name: "Selected Point 1",
+      marker: { size: 8, color: "black" },
+    }
+    : null;
+
+  const selectedPoint2Data = selectedPoints.point2
+    ? {
+      x: [data[selectedPoints.point2.datasetIndex].x[selectedPoints.point2.index]],
+      y: [data[selectedPoints.point2.datasetIndex].y[selectedPoints.point2.index]],
+      mode: "markers",
+      type: "scatter",
+      name: "Selected Point 2",
+      marker: { size: 8, color: "red" },
+    }
+    : null;
+
+  const lineData = linearRegressionLine
+    ? {
+      x: linearRegressionLine.x,
+      y: linearRegressionLine.y,
+      mode: "lines",
+      type: "scatter",
+      name: "Linear Regression Line",
+      line: { color: "green", width: 2 },
+    }
+    : null;
 
   return (
     <div>
       <Plotly
-        data={plotData}
+        data={[...plotData, selectedPoint1Data, selectedPoint2Data, lineData].filter(Boolean)}
         layout={layout(...labels)}
         config={config}
         onClick={(event) => handleSelectPoint(event)}
-        style={{ width: '100%', height: '100%' }}
+        style={{ width: "100%", height: "100%" }}
       />
 
       <div className="info-button-regression" style={{ float: "right", display: 'flex', padding: '40px' }}>

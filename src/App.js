@@ -87,7 +87,6 @@ function App() {
   const [showInterpolationAccordion, setShowInterpolationAccordion] = useState(false);
 
   const [debounceTimer, setDebounceTimer] = useState(null);
-
   
   const [linearRegressionLine, setLinearRegressionLine] = useState(null);
 
@@ -555,7 +554,6 @@ function App() {
                                 }}
                               />
                             </div>
-
 
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                               <div>Show Cutting</div>
