@@ -204,7 +204,7 @@ function Chart({ data }) {
             </div>
 
             {linearRegressionResult && (
-              <div style={{ padding: '10px', borderRadius: '5px', backgroundColor: '#f1f1f1' }}>
+              <div style={{ padding: '10px', borderRadius: '5px', marginRight: '8%', backgroundColor: '#f1f1f1' }}>
                 <div>
                   Point 1: ({data[selectedPoints.point1.datasetIndex].x[selectedPoints.point1.index]},
                   {data[selectedPoints.point1.datasetIndex].y[selectedPoints.point1.index]})

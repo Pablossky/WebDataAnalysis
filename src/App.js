@@ -619,8 +619,8 @@ function App() {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              margin: '0 auto', // Center the entire div horizontally
-                              maxWidth: '250px', // Optionally limit the maximum width of the container
+                              margin: '0 auto', 
+                              maxWidth: '250px', 
                             }}
                           >
 
