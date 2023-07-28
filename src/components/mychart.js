@@ -117,18 +117,14 @@ function Chart({ data }) {
       const slope = (y2 - y1) / (x2 - x1);
       const yIntercept = y1 - slope * x1;
   
-      // Calculate the new starting point based on the start offset
       const x1New = x1 + startOffset;
       const y1New = yIntercept + slope * x1New;
   
-      // Calculate the direction of the line
       const directionX = x2 - x1;
       const directionY = y2 - y1;
   
-      // Calculate the length of the line
       const currentLineLength = Math.sqrt(directionX * directionX + directionY * directionY);
   
-      // Calculate the unit vector
       const unitX = directionX / currentLineLength;
       const unitY = directionY / currentLineLength;
   
@@ -137,7 +133,7 @@ function Chart({ data }) {
       const y2New = y1New + unitY * lineLength;
   
       // Update the linear regression line with the new coordinates
-      setLinearRegressionLine({
+      setLinearRegressionLine({ // Adding there the X offset probably would help, but idk
         x: [x1New, x2New],
         y: [y1New, y2New],
       });
