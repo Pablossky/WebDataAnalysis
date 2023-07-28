@@ -3,7 +3,7 @@
 import 'toolcool-range-slider';
 import 'semantic-ui-css/semantic.min.css';
 import React, { useState, useEffect } from 'react';
-import { Dropdown, Popup, Input, Grid, Segment } from 'semantic-ui-react';
+import { Dropdown, Popup, Input, Grid, Segment, Checkbox } from 'semantic-ui-react';
 
 // Functionality
 import akimaInterpolate from './functionality/akimaInterpolation.js';
@@ -27,7 +27,6 @@ import {
   useSampleCount,
   useSelectedSource,
   useOffset,
-  useInterpolationOffset,
   useLowpassEnabled,
   useCutoffFrequency,
   useSampleRate,
@@ -142,7 +141,7 @@ function App() {
 
   useEffect(() => {
     handleInterpolation();
-    
+
   }, [lowpassFilterEnabled, chartData, splitIndex, originalChartData, subtractFromOriginal, subtractionValue]);
 
   useEffect(() => {
@@ -152,7 +151,12 @@ function App() {
 
   useEffect(() => {
     handleDataSourceSwitch(selectedSource);
-  }, [swapXY]); // Swapping axes
+  }, [swapXY]); // Swapping 
+
+  useEffect(() => {
+    const modifiedChartData = applySubtraction(resampledChartData, subtractionValue);
+    setSubtractedChartData(modifiedChartData);
+  }, [sliderValue, resampledChartData, subtractionValue]);
 
   //-----------------------------------------HANDLE-------------------------------------------
 
@@ -216,6 +220,8 @@ function App() {
       x: splitDataX,
       y: splitDataY,
     });
+
+    handleSubtractionSliderChange();
   }; // Ok
 
   const handleInterpolation = () => {
@@ -361,6 +367,7 @@ function App() {
     };
 
     setOffsettedChartData(offsettedChartData);
+    handleSubtractionSliderChange();
   }; // Ok
 
   const handleLowpassToggle = () => {
@@ -502,6 +509,7 @@ function App() {
                     <Chart
                       data={[
                         subtractedChartData,
+                        resampledChartData,
                         originalCopyData,
                       ]}
                       legend={true}
@@ -562,99 +570,93 @@ function App() {
 
                       {showInput && (
                         <div>
-                          <hr style={{ margin: '10px 0', borderTop: '1px solid #ccc' }} />
-                          <strong>Input</strong>
-                          <Popup
-                            content="Toggle to swap X and Y arrays on the chart"
-                            position="center"
-                            trigger={
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <div style={{ marginRight: '10px' }}>Swap X and Y</div>
-                                <ToggleSwitch
-                                  checked={swapXY}
-                                  onChange={() => setSwapXY(!swapXY)}
-                                />
-                              </div>
-                            }
-                            hoverable
-                          />
-                          <div className="Break"></div>
+                          <hr style={{ margin: '10px 0', borderTop: '1px solid #ccc' }} /><strong>Input</strong>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
 
-                          <Popup
-                            content="Choose data from your computer saved in .xlsx file or paste it from your clipboard."
-                            position="center"
-                            trigger={
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <div className="InputFile" style={{ marginRight: '10px' }}>
-                                  <div></div>
-                                  <Input
-                                    type="file"
-                                    accept=".xlsx, .xls"
-                                    onChange={handleFileUpload}
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                              <Popup
+                                content="Toggle to swap X and Y arrays on the chart"
+                                position="center"
+                                trigger={
+                                  <Checkbox
+                                    label="Swap X and Y"
+                                    checked={swapXY}
+                                    onChange={() => setSwapXY(!swapXY)}
                                   />
-                                </div>
-                                <div></div>
-                                <Input
-                                  defaultValue="Paste data..."
-                                  onChange={handlePaste}
-                                />
-                              </div>
-                            }
-                            hoverable
-                          />
+                                }
+                                hoverable
+                              />
+                            </div>
+                            <div className="InputFile" style={{ display: 'flex', alignItems: 'center' }}>
+                              <div></div>
+                              <Input
+                                type="file"
+                                accept=".xlsx, .xls"
+                                onChange={handleFileUpload}
+                                style={{ width: '150px', fontSize: '12px' }}
+                              />
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                              <Input
+                                defaultValue="Paste data..."
+                                onChange={handlePaste}
+                              />
+                            </div>
+                          </div>
                         </div>
                       )}
 
                       <div className="Break"></div>
 
                       {showInterpolation && (
-        <div style={{ paddingTop: '10px', borderTop: '1px solid #ccc', textAlign: 'center' }}>
-          <div
-            onClick={() => setShowInterpolationAccordion(!showInterpolationAccordion)}
-            style={{
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto', // Center the entire div horizontally
-              maxWidth: '250px', // Optionally limit the maximum width of the container
-            }}
-          >
-            
-            <strong style={{ fontSize: '1.2em' }}>Interpolation</strong>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{
-                marginLeft: '5%',
-                transition: 'transform 0.3s',
-                transform: showInterpolationAccordion ? 'rotate(180deg)' : 'none',
-              }}
-            >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </div>
+                        <div style={{ paddingTop: '10px', borderTop: '1px solid #ccc', textAlign: 'center' }}>
+                          <div
+                            onClick={() => setShowInterpolationAccordion(!showInterpolationAccordion)}
+                            style={{
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              margin: '0 auto', // Center the entire div horizontally
+                              maxWidth: '250px', // Optionally limit the maximum width of the container
+                            }}
+                          >
 
-          
-          <div className="slider-container">
-                                    <SliderInput
-                                      value={sliderValue}
-                                      min={0}
-                                      max={8 * chartData.x.length}
-                                      onChange={handleSliderChange}
-                                      name={'Sample Count'}
-                                      sizeName={30}
-                                      sizeSlider={60}
-                                      sizeInput={20}
-                                    />
-                                  </div>
+                            <strong style={{ fontSize: '1.2em' }}>Interpolation</strong>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              style={{
+                                marginLeft: '5%',
+                                transition: 'transform 0.3s',
+                                transform: showInterpolationAccordion ? 'rotate(180deg)' : 'none',
+                              }}
+                            >
+                              <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                          </div>
+
+
+                          <div className="slider-container">
+                            <SliderInput
+                              value={sliderValue}
+                              min={0}
+                              max={8 * chartData.x.length}
+                              onChange={handleSliderChange}
+                              name={'Sample Count'}
+                              sizeName={30}
+                              sizeSlider={60}
+                              sizeInput={20}
+                            />
+                          </div>
 
                           {showInterpolationAccordion && (
                             <Popup
