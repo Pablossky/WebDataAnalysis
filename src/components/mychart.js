@@ -69,6 +69,10 @@ function Chart({ data }) {
   const [linearRegressionResult, setLinearRegressionResult] = useState(null);
   const [linearRegressionLine, setLinearRegressionLine] = useState(null);
   const [sliderValue, setSliderValue] = useState(0);
+  const [lineLength, setLineLength] = useState(0);
+  const [linearRegressionLineLength, setLinearRegressionLineLength] = useState(1); // Add this line
+
+  const [startOffset, setStartOffset] = useState(0);
 
   const plotData = useMemo(() => {
     const pData = data.map(i => {
@@ -102,11 +106,54 @@ function Chart({ data }) {
     return `y = ${slope.toFixed(2)}x + ${yIntercept.toFixed(2)}`;
   };
 
-  const updateLinearRegressionLine = (offset) => {
+  const updateLinearRegressionLine = (startOffset, lineLength) => {
     if (linearRegressionLine) {
-      const newXValues = linearRegressionLine.x.map((x) => x + offset);
-      setLinearRegressionLine({ ...linearRegressionLine, x: newXValues });
+      const x1 = data[selectedPoints.point1.datasetIndex].x[selectedPoints.point1.index];
+      const y1 = data[selectedPoints.point1.datasetIndex].y[selectedPoints.point1.index];
+      const x2 = data[selectedPoints.point2.datasetIndex].x[selectedPoints.point2.index];
+      const y2 = data[selectedPoints.point2.datasetIndex].y[selectedPoints.point2.index];
+  
+      // Calculate the slope and y-intercept
+      const slope = (y2 - y1) / (x2 - x1);
+      const yIntercept = y1 - slope * x1;
+  
+      // Calculate the new starting point based on the start offset
+      const x1New = x1 + startOffset;
+      const y1New = yIntercept + slope * x1New;
+  
+      // Calculate the direction of the line
+      const directionX = x2 - x1;
+      const directionY = y2 - y1;
+  
+      // Calculate the length of the line
+      const currentLineLength = Math.sqrt(directionX * directionX + directionY * directionY);
+  
+      // Calculate the unit vector
+      const unitX = directionX / currentLineLength;
+      const unitY = directionY / currentLineLength;
+  
+      // Calculate the new ending point based on the line length and unit vector
+      const x2New = x1New + unitX * lineLength;
+      const y2New = y1New + unitY * lineLength;
+  
+      // Update the linear regression line with the new coordinates
+      setLinearRegressionLine({
+        x: [x1New, x2New],
+        y: [y1New, y2New],
+      });
     }
+  };
+  
+  const handleStartSliderChange = (event, newValue) => {
+    const offset = newValue - startOffset;
+    setStartOffset(newValue);
+    updateLinearRegressionLine(offset, lineLength);
+  };
+
+  const handleLengthSliderChange = (event, newValue) => {
+    const length = newValue - lineLength;
+    setLineLength(newValue);
+    updateLinearRegressionLine(startOffset, length);
   };
 
   const handleSelectPoint = (event) => {
@@ -139,12 +186,18 @@ function Chart({ data }) {
     }
   };
 
-  const handleSliderChange = (event, newValue) => {
-    // Calculate the offset from the original x values
-    const offset = newValue - sliderValue;
-    setSliderValue(newValue);
-    updateLinearRegressionLine(offset);
+  const handleSliderChange = (event, newValue, sliderType) => {
+    if (sliderType === "offset") {
+      // Calculate the offset from the original x values
+      const offset = newValue - sliderValue;
+      setSliderValue(newValue);
+      updateLinearRegressionLine(offset, linearRegressionLineLength);
+    } else if (sliderType === "lineLength") {
+      setLinearRegressionLineLength(newValue);
+      updateLinearRegressionLine(0, newValue);
+    }
   };
+  
 
   const selectedPoint1Data = selectedPoints.point1
     ? {
@@ -181,13 +234,13 @@ function Chart({ data }) {
 
   return (
     <div>
-      <Plotly
-        data={[...plotData, selectedPoint1Data, selectedPoint2Data, lineData].filter(Boolean)}
-        layout={layout(...labels)}
-        config={config}
-        onClick={(event) => handleSelectPoint(event)}
-        style={{ width: "100%", height: "100%" }}
-      />
+       <Plotly
+      data={[...plotData, selectedPoint1Data, selectedPoint2Data, lineData].filter(Boolean)}
+      layout={layout(...labels)}
+      config={config}
+      onClick={(event) => handleSelectPoint(event)}
+      style={{ width: "100%", height: "100%" }}
+    />
 
       <Segment style={{ width: '100%', background: '#fff', display: 'flex', alignItems: 'stretch', border: '1px solid #ccc' }}>
         <Grid columns={1} divided centered style={{ flex: 1 }}>
@@ -223,16 +276,27 @@ function Chart({ data }) {
                   Linear Regression Function: {formatLinearRegressionFunction(linearRegressionResult.slope, linearRegressionResult.yIntercept)}
                 </div>
                 <SliderInput
-                  value={sliderValue}
-                  min={-10}
-                  max={10}
-                  step={0.01}
-                  onChange={handleSliderChange}
-                  name="Offset"
-                  sizeName={1}
-                  sizeSlider={8}
-                  sizeInput={1}
-                />
+                value={sliderValue}
+                min={-10}
+                max={10}
+                step={0.01}
+                onChange={(event, value) => handleSliderChange(event, value, "offset")}
+                name="Offset"
+                sizeName={1}
+                sizeSlider={8}
+                sizeInput={1}
+              />
+              <SliderInput
+                value={linearRegressionLineLength}
+                min={0}
+                max={100}
+                step={0.01}
+                onChange={(event, value) => handleSliderChange(event, value, "lineLength")}
+                name="Line Length"
+                sizeName={1}
+                sizeSlider={8}
+                sizeInput={1}
+              />
               </div>
             )}
           </Grid.Column>
